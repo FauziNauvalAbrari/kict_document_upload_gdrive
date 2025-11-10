@@ -125,76 +125,65 @@ class GoogleDriveService(models.AbstractModel):
 
     def create_folder(self, folder_name, parent_id=None):
         """Create folder in Drive if not exists.
-       Otomatis buat folder utama 'Dokumen_KICT' kalau belum ada.
+        Otomatis buat folder utama 'Dokumen KICT' hanya satu kali di root.
         """
         try:
             service = self._get_drive_service()
 
-            # 1️⃣ Buat / ambil folder utama "Dokumen_KICT"
-            main_folder_name = 'Dokumen_KICT'
-            main_query = (
-                f"name='{main_folder_name}' and "
-                f"mimeType='application/vnd.google-apps.folder' and trashed=false"
-            )
-            _logger.info(f"Checking for main folder: {main_folder_name}")
-            main_results = service.files().list(
-                q=main_query,
-                fields="files(id, name)",
-                spaces='drive'
-            ).execute()
-            main_folders = main_results.get('files', [])
-
-            if main_folders:
-                main_folder_id = main_folders[0]['id']
-                _logger.info(f"Main folder already exists: {main_folder_id}")
-            else:
-                _logger.info(f"Main folder not found. Creating new one...")
-                main_metadata = {
-                    'name': main_folder_name,
-                    'mimeType': 'application/vnd.google-apps.folder'
-                }
-                main_folder = service.files().create(
-                    body=main_metadata,
-                    fields='id'
+            # === 1️⃣ Pastikan folder utama hanya 1 di root ===
+            main_folder_name = 'Dokumen KICT'
+            if folder_name.lower() == main_folder_name.lower():
+                query = (
+                    f"name='{main_folder_name}' and "
+                    f"mimeType='application/vnd.google-apps.folder' and "
+                    f"'root' in parents and trashed=false"
+                )
+                results = service.files().list(
+                    q=query,
+                    fields="files(id, name)",
+                    spaces='drive'
                 ).execute()
-                main_folder_id = main_folder.get('id')
-                _logger.info(f"Main folder created successfully: {main_folder_id}")
+                folders = results.get('files', [])
+                if folders:
+                    _logger.info(f"Main folder already exists at root: {folders[0]['id']}")
+                    return folders[0]['id']
+                # Buat baru di root
+                metadata = {
+                    'name': main_folder_name,
+                    'mimeType': 'application/vnd.google-apps.folder',
+                    'parents': ['root']
+                }
+                folder = service.files().create(body=metadata, fields='id').execute()
+                _logger.info(f"Main folder created at root: {folder['id']}")
+                return folder['id']
 
-            # 2️⃣ Pastikan folder kategori dibuat di dalam folder utama
+            # === 2️⃣ Kalau bukan main folder ===
             if not parent_id:
-                parent_id = main_folder_id
+                parent_id = self.create_folder(main_folder_name)  # pakai yang root tadi
 
-            # 3️⃣ Cek apakah folder kategori sudah ada di dalam folder utama
             query = (
                 f"name='{folder_name}' and "
                 f"mimeType='application/vnd.google-apps.folder' and "
                 f"'{parent_id}' in parents and trashed=false"
             )
-
-            _logger.info(f"Checking for existing category folder: {folder_name}")
             results = service.files().list(
                 q=query,
                 fields="files(id, name)",
                 spaces='drive'
             ).execute()
-
             folders = results.get('files', [])
             if folders:
-                _logger.info(f"Category folder already exists: {folders[0]['id']}")
                 return folders[0]['id']
 
-            # 4️⃣ Jika belum ada, buat folder kategori
+            # Buat folder baru di bawah parent
             metadata = {
                 'name': folder_name,
                 'mimeType': 'application/vnd.google-apps.folder',
                 'parents': [parent_id]
             }
-            _logger.info(f"Creating new category folder: {folder_name}")
             folder = service.files().create(body=metadata, fields='id').execute()
-
-            folder_id = folder.get('id')
-            _logger.info(f"Category folder created successfully: {folder_id}")
-            return folder_id
+            _logger.info(f"Created subfolder '{folder_name}' under parent {parent_id}")
+            return folder['id']
 
         except HttpError as e:
             _logger.error(f"Google Drive API error: {str(e)}")
