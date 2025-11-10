@@ -70,9 +70,16 @@
                         </group>
                     </group>
 
-                    <group string="File">
-                        <field name="file" filename="name"/>
-                        <field name="url" widget="url" readonly="1"/>
+                    <group string="Upload dan Link">
+                        <field name="file" filename="filename"/>
+                        <field name="filename" invisible="1"/>
+                        <button name="action_upload_to_gdrive"
+                                string="Upload"
+                                type="object"
+                                class="btn-primary"
+                                icon="fa-cloud-upload"/>
+                        <separator string="Link Google Drive"/>
+                        <field name="url" readonly="1" widget="url"/>
                     </group>
 
                     <footer>

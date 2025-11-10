@@ -9,13 +9,10 @@ class KictDocumentCategory(models.Model):
     drive_folder_id = fields.Char(string="Google Drive Folder ID", readonly=True)
 
     def action_create_drive_folder(self):
-        """Buat folder di Google Drive untuk kategori ini"""
-        api_key = self.env['ir.config_parameter'].sudo().get_param('gdrive_api_key')
-        if not api_key:
-            raise ValueError("API Key Google Drive belum diset di System Parameters.")
+     """Buat folder di Google Drive untuk kategori ini menggunakan OAuth."""
+     gdrive_service = self.env['gdrive.service']
+     for category in self:
+          if not category.drive_folder_id:
+            folder_id = gdrive_service.create_folder(category.name)
+            category.drive_folder_id = folder_id
 
-        gdrive_service = self.env['gdrive.service']
-        for category in self:
-            if not category.drive_folder_id:
-                folder_id = gdrive_service.create_folder(api_key, category.name)
-                category.drive_folder_id = folder_id

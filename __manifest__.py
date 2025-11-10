@@ -13,6 +13,9 @@
         'security/ir.model.access.csv',
         'views/kict_document_views.xml',
     ],
+    'external_dependencies': {
+        'python': ['google-auth', 'google-auth-oauthlib', 'google-api-python-client'],
+    },
     'installable': True,
     'application': True,
     'license': 'LGPL-3',
