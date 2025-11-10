@@ -1,6 +1,6 @@
 {
-    'name': 'KICT Document Upload GDrive',
-    'version': '1.0',
+    'name': 'KICT Document Upload to GDrive',
+    'version': '2.0',
     'summary': 'Upload dan Preview Dokumen ke Google Drive berdasarkan kategori dan tahun',
     'description': """
         Modul ini mengintegrasikan Odoo dengan Google Drive untuk mengunggah dokumen fleet,

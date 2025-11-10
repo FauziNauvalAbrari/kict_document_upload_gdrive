@@ -1,5 +1,6 @@
 import base64
 from odoo import models, fields
+from odoo.exceptions import UserError
 from datetime import date
 
 class KictDocument(models.Model):
@@ -13,7 +14,8 @@ class KictDocument(models.Model):
     vin_sn = fields.Char(string="No. Rangka", related='fleet_id.vin_sn', readonly=True)
     file = fields.Binary(string="File", required=True)
     filename = fields.Char(string="Nama File") 
-    url = fields.Char(string="Google Drive URL", readonly=True)     
+    url = fields.Char(string="Google Drive URL", readonly=True)
+    drive_file_id = fields.Char(string="Google Drive File ID", readonly=True)  # 👈 TAMBAHAN BARU
 
     def action_upload_to_gdrive(self):
         """Upload file ke Google Drive dengan struktur:
@@ -21,7 +23,7 @@ class KictDocument(models.Model):
         """
         for record in self:
             if not record.file:
-                raise ValueError("❌ Tidak ada file untuk diupload.")
+                raise UserError("❌ Tidak ada file untuk diupload.")
 
             drive_service = self.env['gdrive.service']
 
@@ -49,12 +51,37 @@ class KictDocument(models.Model):
             filename = record.filename or f"{record.name}.pdf"
 
             try:
-                file_url = drive_service.upload_file(
+                # 👇 PERUBAHAN: Sekarang return dict dengan file_id dan url
+                result = drive_service.upload_file(
                     filename=filename,
                     file_content=file_content,
                     parent_id=year_folder_id
                 )
-                record.url = file_url
+                
+                # 👇 Simpan file_id dan url
+                record.write({
+                    'url': result['url'],
+                    'drive_file_id': result['file_id']
+                })
 
             except Exception as e:
-                raise ValueError(f"Gagal upload ke Google Drive: {e}")
+                raise UserError(f"Gagal upload ke Google Drive: {e}")
+
+    def unlink(self):
+        """Override unlink untuk hapus file di Google Drive sebelum hapus record"""
+        drive_service = self.env['gdrive.service']
+        
+        for record in self:
+            # Hapus file di Google Drive jika ada file_id
+            if record.drive_file_id:
+                try:
+                    drive_service.delete_file(record.drive_file_id)
+                except Exception as e:
+                    # Log error tapi tetap lanjut hapus record
+                    # (supaya user tetap bisa hapus record meskipun gagal hapus di Drive)
+                    import logging
+                    _logger = logging.getLogger(__name__)
+                    _logger.warning(f"Gagal hapus file di Google Drive: {e}")
+        
+        # Panggil parent unlink untuk hapus record di database
+        return super(KictDocument, self).unlink()

@@ -32,11 +32,7 @@ class GoogleDriveService(models.AbstractModel):
         if not all([client_id, client_secret, refresh_token]):
             raise UserError(_(
                 "Google Drive credentials tidak lengkap. "
-                "Silakan konfigurasi di Settings > Technical > System Parameters:\n"
-                "- google_drive_client_id\n"
-                "- google_drive_client_secret\n"
-                "- google_drive_refresh_token\n"
-                "- google_drive_access_token (opsional, akan di-generate otomatis)"
+                "Silakan konfigurasi di Settings > Technical > System Parameters"
             ))
         
         info_token = {
@@ -55,8 +51,6 @@ class GoogleDriveService(models.AbstractModel):
                 if creds.expired and creds.refresh_token:
                     _logger.info("Refreshing Google Drive access token...")
                     creds.refresh(Request())
-                    
-                    # Simpan token baru ke system parameters
                     params.set_param('google_drive_access_token', creds.token)
                     _logger.info("Access token berhasil di-refresh")
                 else:
@@ -114,7 +108,11 @@ class GoogleDriveService(models.AbstractModel):
             except HttpError as e:
                 _logger.warning(f"Could not set public permission: {str(e)}")
 
-            return f"https://drive.google.com/file/d/{file_id}/view"
+            # 👇 PERUBAHAN: Return dict dengan file_id dan url
+            return {
+                'file_id': file_id,
+                'url': f"https://drive.google.com/file/d/{file_id}/view"
+            }
 
         except HttpError as e:
             _logger.error(f"Google Drive API error: {str(e)}")
@@ -123,10 +121,30 @@ class GoogleDriveService(models.AbstractModel):
             _logger.error(f"Upload error: {str(e)}")
             raise UserError(_(f"Error saat upload file: {str(e)}"))
 
+    def delete_file(self, file_id):
+        """Delete file from Google Drive by file_id"""
+        try:
+            service = self._get_drive_service()
+            
+            _logger.info(f"Deleting file from Google Drive: {file_id}")
+            service.files().delete(fileId=file_id).execute()
+            _logger.info(f"File {file_id} successfully deleted from Google Drive")
+            
+            return True
+
+        except HttpError as e:
+            if e.resp.status == 404:
+                _logger.warning(f"File {file_id} not found in Google Drive (may be already deleted)")
+                return False
+            else:
+                _logger.error(f"Google Drive API error while deleting: {str(e)}")
+                raise UserError(_(f"Gagal hapus file dari Google Drive: {str(e)}"))
+        except Exception as e:
+            _logger.error(f"Delete file error: {str(e)}")
+            raise UserError(_(f"Error saat hapus file: {str(e)}"))
+
     def create_folder(self, folder_name, parent_id=None):
-        """Create folder in Drive if not exists.
-        Otomatis buat folder utama 'Dokumen KICT' hanya satu kali di root.
-        """
+        """Create folder in Drive if not exists."""
         try:
             service = self._get_drive_service()
 
@@ -159,7 +177,7 @@ class GoogleDriveService(models.AbstractModel):
 
             # === 2️⃣ Kalau bukan main folder ===
             if not parent_id:
-                parent_id = self.create_folder(main_folder_name)  # pakai yang root tadi
+                parent_id = self.create_folder(main_folder_name)
 
             query = (
                 f"name='{folder_name}' and "
@@ -192,12 +210,10 @@ class GoogleDriveService(models.AbstractModel):
             _logger.error(f"Create folder error: {str(e)}")
             raise UserError(_(f"Error saat membuat folder: {str(e)}"))
 
-
     def test_connection(self):
         """Test Google Drive connection."""
         try:
             service = self._get_drive_service()
-            # Try to list files (limit to 1 to save quota)
             results = service.files().list(pageSize=1, fields="files(id, name)").execute()
             return True, _("Koneksi ke Google Drive berhasil!")
         except Exception as e:
