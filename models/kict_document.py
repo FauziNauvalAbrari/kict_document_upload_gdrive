@@ -10,12 +10,12 @@ class KictDocument(models.Model):
     name = fields.Char(string="Nama Dokumen", required=True)
     date = fields.Date(string="Tanggal", default=fields.Date.today)
     category_id = fields.Many2one('kict.document.category', string="Kategori", required=True)
-    fleet_id = fields.Many2one('fleet.vehicle', string="Fleet")
+    fleet_id = fields.Many2one('fleet.vehicle', string="Fleet", required=True)
     vin_sn = fields.Char(string="No. Rangka", related='fleet_id.vin_sn', readonly=True)
     file = fields.Binary(string="File", required=True)
     filename = fields.Char(string="Nama File") 
     url = fields.Char(string="Google Drive URL", readonly=True)
-    drive_file_id = fields.Char(string="Google Drive File ID", readonly=True)  # 👈 TAMBAHAN BARU
+    drive_file_id = fields.Char(string="Google Drive File ID", readonly=True)
 
     def action_upload_to_gdrive(self):
         """Upload file ke Google Drive dengan struktur:
