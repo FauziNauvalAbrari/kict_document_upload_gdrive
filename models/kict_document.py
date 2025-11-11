@@ -1,5 +1,5 @@
 import base64
-from odoo import models, fields
+from odoo import models, fields, api
 from odoo.exceptions import UserError
 from datetime import date
 
@@ -13,7 +13,7 @@ class KictDocument(models.Model):
     fleet_id = fields.Many2one('fleet.vehicle', string="Fleet", required=True)
     vin_sn = fields.Char(string="No. Rangka", related='fleet_id.vin_sn', readonly=True)
     file = fields.Binary(string="File", required=True)
-    filename = fields.Char(string="Nama File") 
+    filename = fields.Char(string="Nama File")
     url = fields.Char(string="Google Drive URL", readonly=True)
     drive_file_id = fields.Char(string="Google Drive File ID", readonly=True)
 
@@ -27,42 +27,56 @@ class KictDocument(models.Model):
 
             drive_service = self.env['gdrive.service']
 
-            # 1️⃣ Buat atau ambil folder utama
+            # CEK dan HAPUS file lama SEBELUM upload file baru
+            old_file_id = record.drive_file_id
+            old_url = record.url
+
+            if old_file_id:
+                try:
+                    result = drive_service.delete_file(old_file_id)
+                    # lanjut upload file baru meskipun gagal hapus file lama
+                except Exception:
+                    pass
+            else:
+                pass  # Upload pertama kali - tidak ada file lama yang perlu dihapus
+
+            # Buat folder structure
             main_folder_id = drive_service.create_folder("Dokumen KICT")
 
-            # 2️⃣ Buat / ambil folder kategori di dalam folder utama
             category_name = record.category_id.name or "Tanpa Kategori"
             category_folder_id = drive_service.create_folder(category_name, parent_id=main_folder_id)
 
-            # Simpan ID folder ke kategori (biar ga bikin ulang tiap kali)
             if not record.category_id.drive_folder_id:
                 record.category_id.drive_folder_id = category_folder_id
 
-            # 3️⃣ Buat folder per tahun di dalam folder kategori
             if record.date:
                 year = record.date.year
             else:
-                year = date.today().year  # fallback kalau field date kosong
+                year = date.today().year
 
             year_folder_id = drive_service.create_folder(str(year), parent_id=category_folder_id)
 
-            # 4️⃣ Upload file ke folder tahun
             file_content = base64.b64decode(record.file)
             filename = record.filename or f"{record.name}.pdf"
 
             try:
-                # 👇 PERUBAHAN: Sekarang return dict dengan file_id dan url
                 result = drive_service.upload_file(
                     filename=filename,
                     file_content=file_content,
                     parent_id=year_folder_id
                 )
-                
-                # 👇 Simpan file_id dan url
+
+                new_file_id = result['file_id']
+                new_url = result['url']
+
+                # Update record dengan file baru
                 record.write({
-                    'url': result['url'],
-                    'drive_file_id': result['file_id']
+                    'url': new_url,
+                    'drive_file_id': new_file_id
                 })
+
+                # Commit changes
+                self.env.cr.commit()
 
             except Exception as e:
                 raise UserError(f"Gagal upload ke Google Drive: {e}")
@@ -70,18 +84,12 @@ class KictDocument(models.Model):
     def unlink(self):
         """Override unlink untuk hapus file di Google Drive sebelum hapus record"""
         drive_service = self.env['gdrive.service']
-        
+
         for record in self:
-            # Hapus file di Google Drive jika ada file_id
             if record.drive_file_id:
                 try:
                     drive_service.delete_file(record.drive_file_id)
-                except Exception as e:
-                    # Log error tapi tetap lanjut hapus record
-                    # (supaya user tetap bisa hapus record meskipun gagal hapus di Drive)
-                    import logging
-                    _logger = logging.getLogger(__name__)
-                    _logger.warning(f"Gagal hapus file di Google Drive: {e}")
-        
-        # Panggil parent unlink untuk hapus record di database
+                except Exception:
+                    pass
+
         return super(KictDocument, self).unlink()
