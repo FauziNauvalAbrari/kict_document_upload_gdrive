@@ -23,43 +23,47 @@ class KictDocument(models.Model):
         """
         for record in self:
             if not record.file:
-                raise UserError("❌ Tidak ada file untuk diupload.")
+                return {
+                    'type': 'ir.actions.client',
+                    'tag': 'display_notification',
+                    'params': {
+                        'title': 'Error!',
+                        'message': 'Tidak ada file untuk diupload.',
+                        'type': 'danger',
+                        'sticky': True,
+                    }
+                }
 
             drive_service = self.env['gdrive.service']
 
-            # CEK dan HAPUS file lama SEBELUM upload file baru
+            # ✅ Cek dan hapus file lama sebelum upload file baru
             old_file_id = record.drive_file_id
-            old_url = record.url
-
             if old_file_id:
                 try:
-                    result = drive_service.delete_file(old_file_id)
-                    # lanjut upload file baru meskipun gagal hapus file lama
+                    drive_service.delete_file(old_file_id)
                 except Exception:
                     pass
-            else:
-                pass  # Upload pertama kali - tidak ada file lama yang perlu dihapus
 
             # Buat folder structure
-            main_folder_id = drive_service.create_folder("Dokumen KICT")
-
-            category_name = record.category_id.name or "Tanpa Kategori"
-            category_folder_id = drive_service.create_folder(category_name, parent_id=main_folder_id)
-
-            if not record.category_id.drive_folder_id:
-                record.category_id.drive_folder_id = category_folder_id
-
-            if record.date:
-                year = record.date.year
-            else:
-                year = date.today().year
-
-            year_folder_id = drive_service.create_folder(str(year), parent_id=category_folder_id)
-
-            file_content = base64.b64decode(record.file)
-            filename = record.filename or f"{record.name}.pdf"
-
             try:
+                main_folder_id = drive_service.create_folder("Dokumen KICT")
+
+                category_name = record.category_id.name or "Tanpa Kategori"
+                category_folder_id = drive_service.create_folder(category_name, parent_id=main_folder_id)
+
+                if not record.category_id.drive_folder_id:
+                    record.category_id.drive_folder_id = category_folder_id
+
+                if record.date:
+                    year = record.date.year
+                else:
+                    year = date.today().year
+
+                year_folder_id = drive_service.create_folder(str(year), parent_id=category_folder_id)
+
+                file_content = base64.b64decode(record.file)
+                filename = record.filename or f"{record.name}.pdf"
+
                 result = drive_service.upload_file(
                     filename=filename,
                     file_content=file_content,
@@ -69,17 +73,37 @@ class KictDocument(models.Model):
                 new_file_id = result['file_id']
                 new_url = result['url']
 
-                # Update record dengan file baru
                 record.write({
                     'url': new_url,
                     'drive_file_id': new_file_id
                 })
 
-                # Commit changes
                 self.env.cr.commit()
 
+                return {
+                    'type': 'ir.actions.client',
+                    'tag': 'display_notification',
+                    'params': {
+                        'title': '✅ Upload Berhasil!',
+                        'message': f'File "{filename}" berhasil diupload ke Google Drive.',
+                        'type': 'success',
+                        'sticky': False,
+                        'next': {'type': 'ir.actions.act_window_close'},
+                    }
+                }
+
             except Exception as e:
-                raise UserError(f"Gagal upload ke Google Drive: {e}")
+                error_msg = str(e)
+                return {
+                    'type': 'ir.actions.client',
+                    'tag': 'display_notification',
+                    'params': {
+                        'title': '❌ Upload Gagal!',
+                        'message': f'Gagal upload ke Google Drive: {error_msg}',
+                        'type': 'danger',
+                        'sticky': True,
+                    }
+                }
 
     def unlink(self):
         """Override unlink untuk hapus file di Google Drive sebelum hapus record"""
