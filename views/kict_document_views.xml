@@ -50,7 +50,7 @@
     </record>
 
     <!-- ============================
-         Form View - Dokumen
+        Form View - Dokumen
     ============================ -->
     <record id="view_kict_document_form" model="ir.ui.view">
         <field name="name">kict.document.form</field>
@@ -61,8 +61,8 @@
                     <group>
                         <group>
                             <field name="name"/>
-                            <field name="date" readonly="1"/>
-                            <field name="category_id"/>
+                            <field name="date"/>
+                            <field name="category_id" readonly="1"/>
                         </group>
                         <group>
                             <field name="fleet_id"/>
@@ -71,7 +71,7 @@
                     </group>
 
                     <group>
-                        <group string="Upload dan Link">
+                        <group string="Upload File">
                             <field name="file" filename="filename"/>
                             <field name="filename" invisible="1"/>
                         </group>
@@ -82,15 +82,16 @@
 
                     <group col="1">
                         <button name="action_upload_to_gdrive"
-                                string="Submit to GDrive"
+                                string="Submit to Google Drive"
                                 type="object"
-                                class="btn-primary oe_highlight"/>
+                                class="btn-primary oe_highlight"
+                                icon="fa-cloud-upload"/>
                     </group>
 
                     <separator string="Preview File"/>
-                    <div class="oe_form_field">
-                        <field name="file" widget="pdf_viewer" filename="filename" readonly="1"/>
-                    </div>
+                    <field name="drive_file_id" invisible="1"/>
+                    <field name="preview_html" nolabel="1" widget="html"/>
+                    
                 </sheet>
             </form>
         </field>
