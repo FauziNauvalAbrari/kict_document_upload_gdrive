@@ -6,7 +6,7 @@
     <record id="action_kict_document" model="ir.actions.act_window">
         <field name="name">KICT Document</field>
         <field name="res_model">kict.document</field>
-        <field name="view_mode">tree,form,kanban</field>
+        <field name="view_mode">kanban,tree,form</field>
     </record>
 
     <record id="action_kict_category" model="ir.actions.act_window">
@@ -42,8 +42,13 @@
                 <field name="name"/>
                 <field name="date"/>
                 <field name="category_id"/>
+                <field name="category_name" invisible="1"/>
                 <field name="fleet_id"/>
                 <field name="vin_sn"/>
+                <field name="bpkb_number" invisible="category_name != 'BPKB'"/>
+                <field name="license_plate" readonly="1" invisible="category_name != 'BPKB'"/>
+                <field name="engine_number" readonly="1" invisible="category_name != 'BPKB'"/>
+                <field name="contract_number" invisible="category_name != 'KONTRAK'"/>
                 <field name="url" widget="url"/>
             </tree>
         </field>
@@ -63,10 +68,15 @@
                             <field name="name"/>
                             <field name="date" readonly="1"/>
                             <field name="category_id" readonly="1"/>
+                            <field name="category_name" invisible="1"/>
+                            <field name="bpkb_number" invisible="category_name != 'BPKB'"/>
                         </group>
                         <group>
                             <field name="fleet_id"/>
                             <field name="vin_sn" readonly="1"/>
+                            <field name="license_plate" readonly="1" invisible="category_name != 'BPKB'"/>
+                            <field name="engine_number" readonly="1" invisible="category_name != 'BPKB'"/>
+                            <field name="contract_number" invisible="category_name != 'KONTRAK'"/>
                         </group>
                     </group>
 
@@ -85,12 +95,12 @@
                                 string="Submit to GDrive"
                                 type="object"
                                 class="btn-primary oe_highlight"/>
+                                <!-- icon="fa-cloud-upload" -->
                     </group>
 
                     <separator string="Preview File"/>
-                    <div class="oe_form_field">
-                        <field name="file" widget="pdf_viewer" filename="filename" readonly="1"/>
-                    </div>
+                    <field name="drive_file_id" invisible="1"/>
+                    <field name="preview_html" nolabel="1" widget="html"/>
                 </sheet>
             </form>
         </field>
@@ -103,25 +113,100 @@
         <field name="name">kict.document.kanban</field>
         <field name="model">kict.document</field>
         <field name="arch" type="xml">
-            <kanban class="o_kanban_view">
+            <kanban class="o_kanban_kict_document" create="true" sample="1">
                 <field name="name"/>
                 <field name="date"/>
-                <field name="category_id"/>
+                <field name="category_name" invisible="1"/>
+                <field name="fleet_id"/>
+                <field name="vin_sn"/>
+                <field name="bpkb_number"/>
+                <field name="contract_number"/>
                 <field name="url"/>
 
                 <templates>
-                    <div class="o_kanban_record">
-                        <div class="o_kanban_card" style="padding:10px; border:1px solid #ddd; border-radius:8px;">
-                            <strong><field name="name"/></strong><br/>
-                            <span><field name="category_id"/></span><br/>
-                            <small><field name="date"/></small><br/>
-                            <a target="_blank"><field name="url" widget="url"/></a>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click shadow-sm rounded-lg bg-white overflow-hidden" style="width:280px;">
+                            
+                            <!-- Bagian atas: gambar preview -->
+                            <t t-if="record.url.raw_value">
+                                <iframe t-att-src="'https://drive.google.com/file/d/' + record.url.value.split('/d/')[1].split('/')[0] + '/preview'"
+                                        style="width:100%; height:160px; border:none; object-fit:cover;"
+                                        class="bg-light"
+                                        readonly="1"/>
+
+                            </t>
+                            <t t-else="">
+                                <div class="bg-secondary d-flex align-items-center justify-content-center text-white" style="height:160px;">
+                                    <i class="fa fa-file-pdf-o fa-2x"/>
+                                </div>
+                            </t>
+
+                            <!-- Tanggal dokumen -->
+                        <!-- <div class="position-absolute top-0 end-0 bg-success text-white px-2 py-1 rounded-start"
+                             style="font-size: 12px; opacity:0.9;">
+                            <t t-esc="record.date.value or ''"/>
+                        </div> -->
+                        <div class="text-center text-muted" style="font-size: 16px;">
+                            <t t-esc="record.date.value or ''"/>
+                        </div>
+
+                        <!-- Bagian informasi -->
+                        <div class="p-3 text-center">
+                            <strong class="d-block text-dark">
+                                <field name="fleet_id"/>
+                            </strong>
+
+                            <!-- Tampilkan tergantung kategori -->
+                            <t t-if="record.category_name.raw_value == 'BPKB'">
+                                <div class="mt-2">
+                                    <div class="fw-bold text-uppercase text-muted">Nomor BPKB</div>
+                                    <div class="text-dark fs-6 fw-semibold">
+                                        <field name="bpkb_number"/>
+                                    </div>
+                                </div>
+                            </t>
+                            
+                                <t t-elif="record.category_name.raw_value == 'KONTRAK'">
+                                    <div class="mt-2">
+                                        <div class="fw-bold text-uppercase text-muted">Nomor Kontrak</div>
+                                        <div class="text-dark fs-6 fw-semibold">
+                                            <field name="contract_number"/>
+                                        </div>
+                                    </div>
+                                </t>
+
+                                        <t t-else="">
+                                <div class="mt-2">
+                                    <div class="fw-bold text-uppercase text-muted">Nomor Rangka</div>
+                                    <div class="text-dark fs-6 fw-semibold">
+                                        <field name="vin_sn"/>
+                                    </div>
+                                </div>
+                            </t>
+                        </div>
+
+                        <!-- Tombol View & Delete -->
+                        <div class="d-flex justify-content-center gap-2 pb-3">
+                            <t t-if="record.url.raw_value">
+                                <a t-att-href="record.url.value"
+                                   target="_blank"
+                                   class="btn btn-success btn-sm px-3">
+                                    VIEW
+                                </a>
+                            </t>
+                            <button type="object"
+                                    name="action_delete_record"
+                                    class="btn btn-danger btn-sm px-3"
+                                    confirm="Apakah Anda yakin ingin menghapus dokumen ini?">
+                                DELETE
+                            </button>
                         </div>
                     </div>
-                </templates>
-            </kanban>
-        </field>
-    </record>
+                </t>
+            </templates>
+        </kanban>
+    </field>
+</record>
 
     <!-- ============================
          Tree View - Category

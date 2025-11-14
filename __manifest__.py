@@ -8,7 +8,7 @@
     """,
     'author': 'KICT Dev Team',
     'category': 'Document Management',
-    'depends': ['fleet', 'base'],
+    'depends': ['fleet', 'base', 'fleet_extended_version'],
     'data': [
         'security/ir.model.access.csv',
         'views/kict_document_views.xml',
