@@ -3,6 +3,15 @@ from odoo import api,models, fields
 from odoo.exceptions import UserError, ValidationError
 from datetime import date
 
+class FleetVehicle(models.Model):
+    _inherit = 'fleet.vehicle'
+
+    kict_document_ids = fields.One2many(
+        'kict.document',
+        'fleet_id',
+        string="Dokumen KICT"
+    )
+    
 class KictDocument(models.Model):
     _name = 'kict.document'
     _description = 'KICT Document Upload ke Google Drive (OAuth)'
@@ -13,14 +22,14 @@ class KictDocument(models.Model):
     category_name = fields.Char(related='category_id.name',store=True)
     fleet_id = fields.Many2one('fleet.vehicle', string="Fleet", required=True)
     vin_sn = fields.Char(string="No. Rangka", related='fleet_id.vin_sn', readonly=True)
-    bpkb_number = fields.Char(string="Nomor BPKB")
+    bpkb_number = fields.Char(string="Nomor BPKB", required=True, store=True)
     contract_number = fields.Char(string="Nomor Kontrak")
     engine_number = fields.Char(string="Nomor Mesin",related='fleet_id.engine_number')
     license_plate = fields.Char(string="Nomor Polisi",related='fleet_id.license_plate')
-    file = fields.Binary(string="File", required=True)
+    file = fields.Binary(string="File", required=False)
     filename = fields.Char(string="Nama File") 
     url = fields.Char(string="Google Drive URL", readonly=True)
-    drive_file_id = fields.Char(string="Google Drive File ID", readonly=True)
+    drive_file_id = fields.Char(string="Google Drive File ID", readonly=True )
     preview_html = fields.Html(string="Preview", compute="_compute_preview_html", sanitize=False)
 
     @api.depends('drive_file_id')
@@ -109,19 +118,54 @@ class KictDocument(models.Model):
 
             except Exception as e:
                 raise UserError(f"Gagal upload ke Google Drive: {str(e)}")
+            
+    def _delete_drive_file(self):
+        """Hapus file di Google Drive"""
+        drive_service = self.env['gdrive.service']
+        if self.drive_file_id:
+            try:
+                drive_service.delete_file(self.drive_file_id)
+            except Exception:
+                pass
+
+    def write(self, vals):
+        """Hapus file lama jika user mengganti file"""
+        for rec in self:
+            # Hanya jika file barunya ada (berisi data binary)
+            if 'file' in vals and vals['file']:
+                if rec.drive_file_id:
+                    rec._delete_drive_file()
+                rec.drive_file_id = False
+                rec.url = False
+
+        return super().write(vals)
+
 
     def unlink(self):
-        """Override unlink untuk hapus file di Google Drive sebelum hapus record"""
-        drive_service = self.env['gdrive.service']
-        
-        for record in self:
-            if record.drive_file_id:
-                try:
-                    drive_service.delete_file(record.drive_file_id)
-                except Exception:
-                    pass  # Lanjut hapus record meskipun gagal hapus file
-        
+        """Hapus file di Google Drive sebelum record dihapus"""
+        for rec in self:
+            rec._delete_drive_file()
         return super(KictDocument, self).unlink()
+    
+    @api.constrains('file')
+    def _check_file_required(self):
+        for rec in self:
+            # Kalau new record: file wajib
+            if not rec.id and not rec.file:
+                raise ValidationError("File wajib diupload.")
+
+    # def unlink(self):
+    #     """Override unlink untuk hapus file di Google Drive sebelum hapus record"""
+    #     drive_service = self.env['gdrive.service']
+        
+    #     for record in self:
+    #         if record.drive_file_id:
+    #             try:
+    #                 drive_service.delete_file(record.drive_file_id)
+    #             except Exception:
+    #                 pass  # Lanjut hapus record meskipun gagal hapus file
+        
+    #     return super(KictDocument, self).unlink()
     
     def action_delete_record(self):
         """Aksi hapus record langsung dari kanban"""
@@ -132,9 +176,10 @@ class KictDocument(models.Model):
                 raise UserError(f"Gagal menghapus dokumen: {str(e)}")
         return True
     
-    @api.constrains('bpkb_number', 'category_id')
-    def _check_bpkb_number_required(self):
-        for record in self:
-            if record.category_id.name == 'BPKB' and not record.bpkb_number:
-                raise ValidationError ("Nomor BPKB wajib diisi untuk kategori BPKB.")
+
+    # @api.constrains('bpkb_number', 'category_id')
+    # def _check_bpkb_number_required(self):
+    #     for record in self:
+    #         if record.category_id.name == 'BPKB' and not record.bpkb_number:
+    #             raise ValidationError ("Nomor BPKB wajib diisi untuk kategori BPKB.")
             

@@ -39,16 +39,16 @@
         <field name="model">kict.document</field>
         <field name="arch" type="xml">
             <tree string="Dokumen">
+                <field name="category_name"/>
                 <field name="name"/>
                 <field name="date"/>
                 <field name="category_id"/>
-                <field name="category_name" invisible="1"/>
                 <field name="fleet_id"/>
                 <field name="vin_sn"/>
-                <field name="bpkb_number" invisible="category_name != 'BPKB'"/>
-                <field name="license_plate" readonly="1" invisible="category_name != 'BPKB'"/>
-                <field name="engine_number" readonly="1" invisible="category_name != 'BPKB'"/>
-                <field name="contract_number" invisible="category_name != 'KONTRAK'"/>
+                <field name="bpkb_number" column_invisible="category_name != 'BPKB'"/>
+                <field name="license_plate" readonly="1" column_invisible="category_name != 'BPKB'"/>
+                <field name="engine_number" readonly="1" column_invisible="category_name != 'BPKB'"/>
+                <field name="contract_number" column_invisible="category_name != 'KONTRAK'"/>
                 <field name="url" widget="url"/>
             </tree>
         </field>
@@ -94,7 +94,8 @@
                         <button name="action_upload_to_gdrive"
                                 string="Submit to GDrive"
                                 type="object"
-                                class="btn-primary oe_highlight"/>
+                                class="btn-primary oe_highlight"
+                                />
                                 <!-- icon="fa-cloud-upload" -->
                     </group>
 
@@ -175,7 +176,7 @@
                                     </div>
                                 </t>
 
-                                        <t t-else="">
+                                <t t-else="">
                                 <div class="mt-2">
                                     <div class="fw-bold text-uppercase text-muted">Nomor Rangka</div>
                                     <div class="text-dark fs-6 fw-semibold">
