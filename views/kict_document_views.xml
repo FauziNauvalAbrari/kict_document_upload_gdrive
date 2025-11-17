@@ -39,16 +39,15 @@
         <field name="model">kict.document</field>
         <field name="arch" type="xml">
             <tree string="Dokumen">
-                <field name="category_name"/>
                 <field name="name"/>
                 <field name="date"/>
                 <field name="category_id"/>
                 <field name="fleet_id"/>
                 <field name="vin_sn"/>
-                <field name="bpkb_number" column_invisible="category_name != 'BPKB'"/>
-                <field name="license_plate" readonly="1" column_invisible="category_name != 'BPKB'"/>
-                <field name="engine_number" readonly="1" column_invisible="category_name != 'BPKB'"/>
-                <field name="contract_number" column_invisible="category_name != 'KONTRAK'"/>
+                <field name="bpkb_number" optional="show"/>
+                <field name="license_plate" optional="show"/>
+                <field name="engine_number" optional="show"/>
+                <field name="contract_number" optional="show"/>
                 <field name="url" widget="url"/>
             </tree>
         </field>
