@@ -22,7 +22,7 @@ class KictDocument(models.Model):
     category_name = fields.Char(related='category_id.name',store=True)
     fleet_id = fields.Many2one('fleet.vehicle', string="Fleet", required=True)
     vin_sn = fields.Char(string="No. Rangka", related='fleet_id.vin_sn', readonly=True)
-    bpkb_number = fields.Char(string="Nomor BPKB", required=True, store=True)
+    bpkb_number = fields.Char(string="Nomor BPKB", store=True)
     contract_number = fields.Char(string="Nomor Kontrak")
     engine_number = fields.Char(string="Nomor Mesin",related='fleet_id.engine_number')
     license_plate = fields.Char(string="Nomor Polisi",related='fleet_id.license_plate')

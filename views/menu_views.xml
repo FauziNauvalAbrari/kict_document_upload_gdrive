@@ -1,0 +1,7 @@
+<odoo>
+    <menuitem id="menu_kict_document_root"
+              name="Dokumen KICT"
+              sequence="10"
+              web_icon="kict_document_upload_gdrive,static/description/icon.png"
+              />
+</odoo>
