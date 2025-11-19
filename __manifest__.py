@@ -12,7 +12,6 @@
     'images': ['static/description/icon.png'],
     'data': [
         'security/ir.model.access.csv',
-        'views/menu_views.xml',
         'views/kict_document_views.xml',
     ],
     'external_dependencies': {

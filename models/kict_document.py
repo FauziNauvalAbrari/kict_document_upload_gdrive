@@ -176,7 +176,45 @@ class KictDocument(models.Model):
                 raise UserError(f"Gagal menghapus dokumen: {str(e)}")
         return True
     
+    @api.constrains('file', 'filename')
+    def _check_file_type(self):
+        allowed = ['pdf']   # <--format yang diizinkan
+        for rec in self:
+            if rec.filename:
+                ext = rec.filename.split('.')[-1].lower()
+                if ext not in allowed:
+                    raise ValidationError(
+                        "Jenis file tidak diizinkan! Hanya boleh: PDF"
+                    )
+    
+    @api.constrains('file', 'category_name')
+    def _check_file_size(self):
+        for rec in self:
+            if not rec.file:
+                continue
 
+            # Hitung ukuran file (bytes)
+            file_size = len(base64.b64decode(rec.file))
+
+            # Batasan
+            max_stnk = 150 * 1024             # 150 KB
+            max_other = 10 * 1024 * 1024      # 10 MB
+
+            # Kondisi khusus STNK
+            if rec.category_name == "STNK":
+                if file_size > max_stnk:
+                    raise ValidationError(
+                        "Ukuran file STNK maksimal **150 KB**.\n"
+                        f"Ukuran saat ini: {round(file_size/1024, 2)} KB"
+                    )
+
+            # Kategori lainnya
+            else:
+                if file_size > max_other:
+                    raise ValidationError(
+                        "Ukuran file maksimal **10 MB** untuk kategori ini.\n"
+                        f"Ukuran saat ini: {round(file_size/1024/1024, 2)} MB"
+                    )
     # @api.constrains('bpkb_number', 'category_id')
     # def _check_bpkb_number_required(self):
     #     for record in self:
