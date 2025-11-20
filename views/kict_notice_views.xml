@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- ============================
+         Form View - Verifikasi Notice
+    ============================ -->
+    <record id="view_kict_notice_form" model="ir.ui.view">
+        <field name="name">kict.notice.form</field>
+        <field name="model">kict.notice</field>
+        <field name="arch" type="xml">
+            <form string="Verifikasi Notice Kendaraan">
+                <sheet>
+                    <!-- Section: Informasi Kendaraan -->
+                    <group string="Informasi Kendaraan">
+                        <group>
+                            <field name="fleet_id" options="{'no_create': True}"/>
+                            <field name="license_plate"/>
+                            <field name="vin_sn"/>
+                        </group>
+                        <group>
+                            <field name="engine_number"/>
+                            <field name="vehicle_type"/>
+                            <field name="color"/>
+                        </group>
+                    </group>
+
+                    <!-- Section: Informasi STNK -->
+                    <group string="Informasi STNK">
+                        <group>
+                            <field name="date_terima_stnk"/>
+                            <field name="no_stnk"/>
+                            <field name="fuel_type"/>
+                            <field name="date_ditetapkan"/>
+                        </group>
+                        <group>
+                            <field name="cylinder"/>
+                            <field name="date_berlaku"/>
+                        </group>
+                    </group>
+
+                    <!-- Section: Informasi Biaya -->
+                    <group string="Biaya">
+                        <group>
+                            <field name="pkb"/>
+                            <field name="swdkllj"/>
+                            <field name="jasa"/>
+                            <field name="admin_plat"/>
+                        </group>
+                        <group>
+                            <field name="denda"/>
+                            <field name="materai"/>
+                            <field name="total" class="oe_subtotal_footer_separator" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================
+         Tree View - Verifikasi Notice
+    ============================ -->
+    <record id="view_kict_notice_tree" model="ir.ui.view">
+        <field name="name">kict.notice.tree</field>
+        <field name="model">kict.notice</field>
+        <field name="arch" type="xml">
+            <tree string="Verifikasi Notice Kendaraan">
+                <field name="fleet_id"/>
+                <field name="license_plate"/>
+                <field name="vin_sn"/>
+                <field name="engine_number"/>
+                <field name="vehicle_type"/>
+                <field name="color"/>
+                <field name="total" sum="Total"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ============================
+         Tree View - Master Data Notice
+    ============================ -->
+    <record id="view_kict_notice_master_tree" model="ir.ui.view">
+        <field name="name">kict.notice.master.tree</field>
+        <field name="model">kict.notice</field>
+        <field name="arch" type="xml">
+            <tree string="Master Data Notice Requirement" 
+                  decoration-danger="status_color == 1" 
+                  decoration-warning="status_color == 3" 
+                  decoration-info="status_color == 4" 
+                  decoration-success="status_color == 10">
+                <field name="fleet_id"/>
+                <field name="license_plate"/>
+                 <field name="license_plate"/>
+                <field name="vin_sn"/>
+                <field name="engine_number"/>
+                <field name="vehicle_type"/>
+                <field name="color"/>
+                <field name="date_ditetapkan"/>
+                <field name="date_berlaku"/>
+                <field name="umur_display"/>
+                <field name="keterangan"/>
+                <field name="status_color" column_invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ============================
+         Search View
+    ============================ -->
+    <record id="view_kict_notice_search" model="ir.ui.view">
+        <field name="name">kict.notice.search</field>
+        <field name="model">kict.notice</field>
+        <field name="arch" type="xml">
+            <search string="Search Notice">
+                <field name="fleet_id"/>
+                <field name="license_plate"/>
+                <field name="no_stnk"/>
+                <filter string="Denda" name="filter_denda" domain="[('umur_days', '&lt;', 0)]"/>
+                <filter string="Segera Perpanjang" name="filter_urgent" domain="[('umur_days', '&gt;=', 0), ('umur_days', '&lt;=', 30)]"/>
+                <filter string="Normal" name="filter_normal" domain="[('umur_days', '&gt;', 60)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Fleet" name="group_fleet" context="{'group_by': 'fleet_id'}"/>
+                    <filter string="Bulan Berlaku" name="group_month" context="{'group_by': 'date_berlaku:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ============================
+         Actions (AFTER Views)
+    ============================ -->
+    <record id="action_kict_notice_verification" model="ir.actions.act_window">
+        <field name="name">Verifikasi Notice Kendaraan</field>
+        <field name="res_model">kict.notice</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{}</field>
+    </record>
+
+    <record id="action_kict_notice_master" model="ir.actions.act_window">
+        <field name="name">Master Data Notice Requirement</field>
+        <field name="res_model">kict.notice</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_kict_notice_master_tree"/>
+        <field name="context">{}</field>
+    </record>
+
+    <!-- ============================
+         Menu Structure
+    ============================ -->
+    <menuitem id="menu_kict_notice_root"
+              name="Notice"
+              parent="menu_kict_document_root"
+              sequence="3"/>
+
+    <menuitem id="menu_kict_notice_verification"
+              name="Verifikasi Notice Kendaraan"
+              parent="menu_kict_notice_root"
+              action="action_kict_notice_verification"
+              sequence="1"/>
+
+    <menuitem id="menu_kict_notice_master"
+              name="Master Data Notice Requirement"
+              parent="menu_kict_notice_root"
+              action="action_kict_notice_master"
+              sequence="2"/>
+
+</odoo>

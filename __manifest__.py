@@ -13,6 +13,8 @@
     'data': [
         'security/ir.model.access.csv',
         'views/kict_document_views.xml',
+        'views/kict_notice_views.xml',
+        
     ],
     'external_dependencies': {
         'python': ['google-auth', 'google-auth-oauthlib', 'google-api-python-client'],
