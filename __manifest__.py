@@ -13,7 +13,10 @@
     'data': [
         'security/ir.model.access.csv',
         'views/kict_document_views.xml',
-        'views/kict_notice_views.xml',
+        'views/kict_stnk_views.xml',
+        'views/kict_sio_views.xml',
+        'views/kict_keur_views.xml',
+        'views/kict_iak_views.xml',
         
     ],
     'external_dependencies': {

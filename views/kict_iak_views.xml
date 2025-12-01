@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- ============================================
+         IZIN ANGKUT - VERIFIKASI VIEWS
+    ============================================ -->
+    <record id="view_kict_iak_verifikasi_form" model="ir.ui.view">
+        <field name="name">kict.iak.verifikasi.form</field>
+        <field name="model">kict.iak</field>
+        <field name="arch" type="xml">
+            <form string="Verifikasi Izin Angkut">
+                <sheet>
+                    <group string="Informasi Kendaraan">
+                        <group>
+                            <field name="fleet_id" options="{'no_create': True}"/>
+                            <field name="license_plate"/>
+                            <field name="vin_sn"/>
+                        </group>
+                        <group>
+                            <field name="engine_number"/>
+                            <field name="vehicle_type"/>
+                            <field name="color"/>
+                        </group>
+                    </group>
+
+                    <group string="Informasi Izin Angkut">
+                        <group>
+                            <field name="date_terima"/>
+                            <field name="no_iak"/>
+                            <field name="jenis_angkutan"/>
+                        </group>
+                        <group>
+                            <field name="kapasitas"/>
+                            <field name="satuan_kapasitas"/>
+                            <field name="trayek"/>
+                        </group>
+                    </group>
+
+                    <group string="Periode">
+                        <group>
+                            <field name="date_ditetapkan"/>
+                        </group>
+                        <group>
+                            <field name="date_berlaku"/>
+                        </group>
+                    </group>
+
+                    <group string="Data SPK">
+                        <group>
+                            <field name="tanggal_spk"/>
+                            <field name="no_spk"/>
+                        </group>
+                        <group>
+                            <field name="status_perpanjangan"/>
+                        </group>
+                    </group>
+
+                    <group string="Detail Biaya">
+                        <group>
+                            <field name="pkb"/>
+                            <field name="swdkllj"/>
+                            <field name="jasa"/>
+                        </group>
+                        <group>
+                            <field name="admin_plat"/>
+                            <field name="denda"/>
+                            <field name="materai"/>
+                            <field name="total" class="oe_subtotal_footer_separator"/>
+                        </group>
+                    </group>
+
+                    <group><field name="notes" placeholder="Catatan..."/></group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_kict_iak_verifikasi_tree" model="ir.ui.view">
+        <field name="name">kict.iak.verifikasi.tree</field>
+        <field name="model">kict.iak</field>
+        <field name="arch" type="xml">
+            <tree string="Verifikasi Izin Angkut">
+                <field name="fleet_id"/>
+                <field name="license_plate"/>
+                <field name="no_iak"/>
+                <field name="jenis_angkutan"/>
+                <field name="trayek"/>
+                <field name="date_berlaku"/>
+                <field name="no_spk"/>
+                <field name="total" sum="Total"/>
+                <field name="status_perpanjangan" widget="badge"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ============================================
+         IZIN ANGKUT - MASTER DATA VIEWS
+    ============================================ -->
+    <record id="view_kict_iak_master_form" model="ir.ui.view">
+        <field name="name">kict.iak.master.form</field>
+        <field name="model">kict.iak</field>
+        <field name="arch" type="xml">
+            <form string="Master Data Izin Angkut" create="false" edit="false" delete="false">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" icon="fa-history" type="object" name="action_view_spk">
+                            <field name="spk_count" widget="statinfo" string="SPK"/>
+                        </button>
+                    </div>
+
+                    <group string="Informasi Kendaraan">
+                        <group>
+                            <field name="fleet_id"/>
+                            <field name="license_plate"/>
+                            <field name="vin_sn"/>
+                        </group>
+                        <group>
+                            <field name="engine_number"/>
+                            <field name="vehicle_type"/>
+                            <field name="color"/>
+                        </group>
+                    </group>
+
+                    <group string="Informasi Izin Angkut">
+                        <group>
+                            <field name="no_iak"/>
+                            <field name="jenis_angkutan"/>
+                            <field name="kapasitas"/>
+                            <field name="satuan_kapasitas"/>
+                        </group>
+                        <group>
+                            <field name="trayek"/>
+                            <field name="date_ditetapkan"/>
+                            <field name="date_berlaku"/>
+                            <field name="umur_display"/>
+                            <field name="keterangan"/>
+                            <field name="status_color" invisible="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="History SPK">
+                            <field name="spk_ids" nolabel="1">
+                                <tree decoration-success="status == 'closed'" decoration-warning="status == 'butuh_approval'">
+                                    <field name="tanggal_spk"/>
+                                    <field name="no_spk"/>
+                                    <field name="date_ditetapkan"/>
+                                    <field name="date_berlaku"/>
+                                    <field name="total_biaya" sum="Total"/>
+                                    <field name="status" widget="badge"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_kict_iak_master_tree" model="ir.ui.view">
+        <field name="name">kict.iak.master.tree</field>
+        <field name="model">kict.iak</field>
+        <field name="arch" type="xml">
+            <tree string="Master Data Izin Angkut" 
+                  decoration-danger="status_color == 1" 
+                  decoration-warning="status_color == 3"
+                  decoration-success="status_color == 10">
+                <field name="fleet_id"/>
+                <field name="license_plate"/>
+                <field name="no_iak"/>
+                <field name="jenis_angkutan"/>
+                <field name="trayek"/>
+                <field name="date_berlaku"/>
+                <field name="umur_display"/>
+                <field name="spk_count" string="Jml SPK"/>
+                <field name="keterangan" widget="badge"
+                       decoration-danger="status_color == 1"
+                       decoration-warning="status_color == 3"
+                       decoration-success="status_color == 10"/>
+                <field name="status_color" column_invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ============================================
+         IZIN ANGKUT - SPK VIEWS
+    ============================================ -->
+    <record id="view_kict_iak_spk_form" model="ir.ui.view">
+        <field name="name">kict.iak.spk.form</field>
+        <field name="model">kict.iak.spk</field>
+        <field name="arch" type="xml">
+            <form string="SPK Perpanjangan Izin Angkut">
+                <sheet>
+                    <group string="Referensi">
+                        <group>
+                            <field name="iak_id" options="{'no_create': True}"/>
+                            <field name="license_plate"/>
+                            <field name="no_iak"/>
+                        </group>
+                        <group>
+                            <field name="tanggal_spk"/>
+                            <field name="no_spk"/>
+                            <field name="status"/>
+                        </group>
+                    </group>
+
+                    <group string="Periode Perpanjangan">
+                        <group><field name="date_ditetapkan"/></group>
+                        <group><field name="date_berlaku"/></group>
+                    </group>
+
+                    <group string="Detail Biaya">
+                        <group>
+                            <field name="pkb"/>
+                            <field name="swdkllj"/>
+                            <field name="jasa"/>
+                        </group>
+                        <group>
+                            <field name="admin_plat"/>
+                            <field name="denda"/>
+                            <field name="materai"/>
+                            <field name="total_biaya" class="oe_subtotal_footer_separator"/>
+                        </group>
+                    </group>
+
+                    <group><field name="notes" placeholder="Catatan..."/></group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_kict_iak_spk_tree" model="ir.ui.view">
+        <field name="name">kict.iak.spk.tree</field>
+        <field name="model">kict.iak.spk</field>
+        <field name="arch" type="xml">
+            <tree string="SPK Izin Angkut" decoration-success="status == 'closed'" decoration-warning="status == 'butuh_approval'">
+                <field name="tanggal_spk"/>
+                <field name="no_spk"/>
+                <field name="license_plate"/>
+                <field name="no_iak"/>
+                <field name="date_berlaku"/>
+                <field name="total_biaya" sum="Total"/>
+                <field name="status" widget="badge"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ============================================
+         IZIN ANGKUT - ACTIONS & MENU
+    ============================================ -->
+    <record id="action_kict_iak_master" model="ir.actions.act_window">
+        <field name="name">Master Data Izin Angkut</field>
+        <field name="res_model">kict.iak</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_kict_iak_master_tree"/>
+        <field name="context">{'form_view_ref': 'kict_document_upload_gdrive.view_kict_iak_master_form'}</field>
+    </record>
+
+    <record id="action_kict_iak_verifikasi" model="ir.actions.act_window">
+        <field name="name">Verifikasi Izin Angkut</field>
+        <field name="res_model">kict.iak</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_kict_iak_verifikasi_tree"/>
+        <field name="context">{'form_view_ref': 'kict_document_upload_gdrive.view_kict_iak_verifikasi_form'}</field>
+    </record>
+
+    <record id="action_kict_iak_spk" model="ir.actions.act_window">
+        <field name="name">SPK Izin Angkut</field>
+        <field name="res_model">kict.iak.spk</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_kict_iak_root" name="Izin Angkut" parent="menu_kict_document_root" sequence="40"/>
+    <menuitem id="menu_kict_iak_master" name="Master Data" parent="menu_kict_iak_root" action="action_kict_iak_master" sequence="1"/>
+    <menuitem id="menu_kict_iak_verifikasi" name="Verifikasi" parent="menu_kict_iak_root" action="action_kict_iak_verifikasi" sequence="2"/>
+    <menuitem id="menu_kict_iak_spk" name="SPK" parent="menu_kict_iak_root" action="action_kict_iak_spk" sequence="3"/>
+
+</odoo>

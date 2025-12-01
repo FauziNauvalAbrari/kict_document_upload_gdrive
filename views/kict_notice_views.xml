@@ -1,6 +1,103 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <!-- ============================
+         Form View - Perpanjang STNK (Update Tanggal Berlaku + Input Biaya)
+    ============================ -->
+    <record id="view_kict_notice_perpanjang_form" model="ir.ui.view">
+        <field name="name">kict.notice.perpanjang.form</field>
+        <field name="model">kict.notice</field>
+        <field name="arch" type="xml">
+            <form string="Perpanjang STNK Kendaraan">
+                <sheet>
+                    <!-- Section: Informasi Kendaraan (Readonly) -->
+                    <group string="Informasi Kendaraan">
+                        <group>
+                            <field name="fleet_id" readonly="1"/>
+                            <field name="license_plate" readonly="1"/>
+                            <field name="vin_sn" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="engine_number" readonly="1"/>
+                            <field name="vehicle_type" readonly="1"/>
+                            <field name="no_stnk" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <!-- Section: Update Tanggal STNK -->
+                    <group string="Update Periode STNK">
+                        <group>
+                            <field name="date_ditetapkan"/>
+                            <field name="date_berlaku"/>
+                        </group>
+                        <group>
+                            <field name="umur_display" readonly="1"/>
+                            <field name="keterangan" readonly="1" 
+                                   decoration-danger="status_color == 1"
+                                   decoration-warning="status_color == 3"/>
+                            <field name="status_color" invisible="1"/>
+                        </group>
+                    </group>
+
+                    <!-- Section: Biaya Perpanjangan -->
+                    <group string="Data SPK Perpanjangan">
+                        <group>
+                            <field name="tanggal_spk" required="1"/>
+                            <field name="no_spk" required="1"/>
+                        </group>
+                        <group>
+                            <field name="status_perpanjangan" required="1"/>
+                        </group>
+                    </group>
+
+                    <group string="Detail Biaya Perpanjangan">
+                        <group>
+                            <field name="pkb"/>
+                            <field name="swdkllj"/>
+                            <field name="jasa"/>
+                            <field name="admin_plat"/>
+                        </group>
+                        <group>
+                            <field name="denda"/>
+                            <field name="materai"/>
+                            <field name="total" class="oe_subtotal_footer_separator" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <field name="notes" placeholder="Catatan perpanjangan..."/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================
+         Tree View - Perpanjang STNK
+    ============================ -->
+    <record id="view_kict_notice_perpanjang_tree" model="ir.ui.view">
+        <field name="name">kict.notice.perpanjang.tree</field>
+        <field name="model">kict.notice</field>
+        <field name="arch" type="xml">
+            <tree string="Perpanjang STNK Kendaraan" 
+                  decoration-danger="status_color == 1" 
+                  decoration-warning="status_color == 3">
+                <field name="fleet_id"/>
+                <field name="license_plate"/>
+                <field name="no_stnk"/>
+                <field name="date_berlaku"/>
+                <field name="umur_display"/>
+                <field name="keterangan" widget="badge"
+                       decoration-danger="status_color == 1"
+                       decoration-warning="status_color == 3"
+                       decoration-info="status_color == 4"
+                       decoration-success="status_color == 10"/>
+                <field name="renewal_count" string="Sudah Perpanjang"/>
+                <field name="status_color" column_invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ============================
          Form View - Verifikasi Notice
     ============================ -->
     <record id="view_kict_notice_form" model="ir.ui.view">
@@ -37,8 +134,18 @@
                         </group>
                     </group>
 
-                    <!-- Section: Informasi Biaya -->
-                    <group string="Biaya">
+                    <!-- Section: Biaya Perpanjangan -->
+                    <group string="Biaya Perpanjangan">
+                        <group>
+                            <field name="tanggal_spk"/>
+                            <field name="no_spk"/>
+                        </group>
+                        <group>
+                            <field name="status_perpanjangan"/>
+                        </group>
+                    </group>
+
+                    <group string="Detail Biaya">
                         <group>
                             <field name="pkb"/>
                             <field name="swdkllj"/>
@@ -51,6 +158,117 @@
                             <field name="total" class="oe_subtotal_footer_separator" readonly="1"/>
                         </group>
                     </group>
+
+                    <group>
+                        <field name="notes" placeholder="Catatan perpanjangan..."/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================
+         Form View - Master Data Notice (Readonly + History)
+    ============================ -->
+    <record id="view_kict_notice_master_form" model="ir.ui.view">
+        <field name="name">kict.notice.master.form</field>
+        <field name="model">kict.notice</field>
+        <field name="arch" type="xml">
+            <form string="Master Data Notice Kendaraan" create="false" edit="false" delete="false">
+                <sheet>
+                    <!-- Status Banner -->
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" 
+                                icon="fa-history"
+                                type="object"
+                                name="action_view_renewals">
+                            <field name="renewal_count" widget="statinfo" string="Perpanjangan"/>
+                        </button>
+                    </div>
+
+                    <!-- Section: Informasi Kendaraan (Readonly) -->
+                    <group string="Informasi Kendaraan">
+                        <group>
+                            <field name="fleet_id" readonly="1"/>
+                            <field name="license_plate" readonly="1"/>
+                            <field name="vin_sn" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="engine_number" readonly="1"/>
+                            <field name="vehicle_type" readonly="1"/>
+                            <field name="color" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <!-- Section: Informasi STNK (Readonly) -->
+                    <group string="Informasi STNK">
+                        <group>
+                            <field name="date_terima_stnk" readonly="1"/>
+                            <field name="no_stnk" readonly="1"/>
+                            <field name="fuel_type" readonly="1"/>
+                            <field name="date_ditetapkan" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="cylinder" readonly="1"/>
+                            <field name="date_berlaku" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <!-- Section: History Perpanjangan Pajak -->
+                    <notebook>
+                        <page string="History Perpanjangan Pajak">
+                            <field name="renewal_ids" readonly="1" nolabel="1">
+                                <tree decoration-success="keterangan == 'closed'" 
+                                      decoration-warning="keterangan == 'butuh_approval'"
+                                      decoration-muted="keterangan == 'rejected'"
+                                      decoration-info="keterangan == 'pending'">
+                                    <field name="tanggal_spk"/>
+                                    <field name="no_spk"/>
+                                    <field name="date_ditetapkan" string="Periode Mulai"/>
+                                    <field name="date_berlaku" string="Periode Akhir"/>
+                                    <field name="pkb" optional="hide"/>
+                                    <field name="swdkllj" optional="hide"/>
+                                    <field name="jasa" optional="hide"/>
+                                    <field name="admin_plat" optional="hide"/>
+                                    <field name="denda" optional="hide"/>
+                                    <field name="materai" optional="hide"/>
+                                    <field name="biaya_estimasi" sum="Total Biaya" widget="monetary"/>
+                                    <field name="keterangan"/>
+                                </tree>
+                                <form string="Detail Perpanjangan" create="false" edit="false" delete="false">
+                                    <sheet>
+                                        <group>
+                                            <group>
+                                                <field name="tanggal_spk" readonly="1"/>
+                                                <field name="no_spk" readonly="1"/>
+                                                <field name="date_ditetapkan" readonly="1"/>
+                                                <field name="date_berlaku" readonly="1"/>
+                                            </group>
+                                            <group>
+                                                <field name="keterangan" readonly="1"/>
+                                                <field name="biaya_estimasi" widget="monetary" readonly="1"/>
+                                            </group>
+                                        </group>
+                                        <group string="Rincian Biaya">
+                                            <group>
+                                                <field name="pkb" readonly="1"/>
+                                                <field name="swdkllj" readonly="1"/>
+                                                <field name="jasa" readonly="1"/>
+                                                <field name="admin_plat" readonly="1"/>
+                                            </group>
+                                            <group>
+                                                <field name="denda" readonly="1"/>
+                                                <field name="materai" readonly="1"/>
+                                            </group>
+                                        </group>
+                                        <group>
+                                            <field name="notes" placeholder="Catatan tambahan..." readonly="1"/>
+                                        </group>
+                                    </sheet>
+                                </form>
+                            </field>
+                        </page>
+                    </notebook>
                 </sheet>
             </form>
         </field>
@@ -70,7 +288,8 @@
                 <field name="engine_number"/>
                 <field name="vehicle_type"/>
                 <field name="color"/>
-                <field name="total" sum="Total"/>
+                <field name="total" sum="Total Biaya"/>
+                <field name="renewal_count"/>
             </tree>
         </field>
     </record>
@@ -89,7 +308,6 @@
                   decoration-success="status_color == 10">
                 <field name="fleet_id"/>
                 <field name="license_plate"/>
-                 <field name="license_plate"/>
                 <field name="vin_sn"/>
                 <field name="engine_number"/>
                 <field name="vehicle_type"/>
@@ -97,7 +315,14 @@
                 <field name="date_ditetapkan"/>
                 <field name="date_berlaku"/>
                 <field name="umur_display"/>
-                <field name="keterangan"/>
+                <field name="renewal_count" string="Jml. Perpanjangan"/>
+                <field name="keterangan" 
+                       decoration-bf="status_color == 1"
+                       widget="badge"
+                       decoration-danger="status_color == 1"
+                       decoration-warning="status_color == 3"
+                       decoration-info="status_color == 4"
+                       decoration-success="status_color == 10"/>
                 <field name="status_color" column_invisible="1"/>
             </tree>
         </field>
@@ -126,7 +351,7 @@
     </record>
 
     <!-- ============================
-         Actions (AFTER Views)
+         Actions
     ============================ -->
     <record id="action_kict_notice_verification" model="ir.actions.act_window">
         <field name="name">Verifikasi Notice Kendaraan</field>
@@ -140,7 +365,7 @@
         <field name="res_model">kict.notice</field>
         <field name="view_mode">tree,form</field>
         <field name="view_id" ref="view_kict_notice_master_tree"/>
-        <field name="context">{}</field>
+        <field name="context">{'form_view_ref': 'kict_document_upload_gdrive.view_kict_notice_master_form'}</field>
     </record>
 
     <!-- ============================
@@ -157,7 +382,7 @@
               action="action_kict_notice_verification"
               sequence="1"/>
 
-    <menuitem id="menu_kict_notice_master"
+    <menuitem id="menu_kict_notice_master"  
               name="Master Data Notice Requirement"
               parent="menu_kict_notice_root"
               action="action_kict_notice_master"

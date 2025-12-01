@@ -1,4 +1,11 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_kict_document,access_kict_document,model_kict_document,base.group_user,1,1,1,1
-access_kict_document_category,access_kict_document_category,model_kict_document_category,base.group_user,1,1,1,1
-access_kict_notice,access_kict_notice,model_kict_notice,base.group_user,1,1,1,1
+access_kict_stnk,kict.stnk,model_kict_stnk,base.group_user,1,1,1,1
+access_kict_stnk_spk,kict.stnk.spk,model_kict_stnk_spk,base.group_user,1,1,1,1
+access_kict_sio,kict.sio,model_kict_sio,base.group_user,1,1,1,1
+access_kict_sio_spk,kict.sio.spk,model_kict_sio_spk,base.group_user,1,1,1,1
+access_kict_keur,kict.keur,model_kict_keur,base.group_user,1,1,1,1
+access_kict_keur_spk,kict.keur.spk,model_kict_keur_spk,base.group_user,1,1,1,1
+access_kict_iak,kict.iak,model_kict_iak,base.group_user,1,1,1,1
+access_kict_iak_spk,kict.iak.spk,model_kict_iak_spk,base.group_user,1,1,1,1
+access_kict_document,kict.document,model_kict_document,base.group_user,1,1,1,1
+access_kict_document_category,kict.document.category,model_kict_document_category,base.group_user,1,1,1,1

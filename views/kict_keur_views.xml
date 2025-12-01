@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- ============================================
+         KEUR - VERIFIKASI VIEWS
+    ============================================ -->
+    <record id="view_kict_keur_verifikasi_form" model="ir.ui.view">
+        <field name="name">kict.keur.verifikasi.form</field>
+        <field name="model">kict.keur</field>
+        <field name="arch" type="xml">
+            <form string="Verifikasi KEUR">
+                <sheet>
+                    <group string="Informasi Kendaraan">
+                        <group>
+                            <field name="fleet_id" options="{'no_create': True}"/>
+                            <field name="license_plate"/>
+                            <field name="vin_sn"/>
+                        </group>
+                        <group>
+                            <field name="engine_number"/>
+                            <field name="vehicle_type"/>
+                            <field name="color"/>
+                        </group>
+                    </group>
+
+                    <group string="Informasi KEUR">
+                        <group>
+                            <field name="date_terima"/>
+                            <field name="no_keur"/>
+                            <field name="jenis_uji"/>
+                        </group>
+                        <group>
+                            <field name="hasil_uji"/>
+                            <field name="date_ditetapkan"/>
+                            <field name="date_berlaku"/>
+                        </group>
+                    </group>
+
+                    <group string="Data SPK">
+                        <group>
+                            <field name="tanggal_spk"/>
+                            <field name="no_spk"/>
+                        </group>
+                        <group>
+                            <field name="status_perpanjangan"/>
+                        </group>
+                    </group>
+
+                    <group string="Detail Biaya">
+                        <group>
+                            <field name="pkb"/>
+                            <field name="swdkllj"/>
+                            <field name="jasa"/>
+                        </group>
+                        <group>
+                            <field name="admin_plat"/>
+                            <field name="denda"/>
+                            <field name="materai"/>
+                            <field name="total" class="oe_subtotal_footer_separator"/>
+                        </group>
+                    </group>
+
+                    <group><field name="notes" placeholder="Catatan..."/></group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_kict_keur_verifikasi_tree" model="ir.ui.view">
+        <field name="name">kict.keur.verifikasi.tree</field>
+        <field name="model">kict.keur</field>
+        <field name="arch" type="xml">
+            <tree string="Verifikasi KEUR">
+                <field name="fleet_id"/>
+                <field name="license_plate"/>
+                <field name="no_keur"/>
+                <field name="jenis_uji"/>
+                <field name="hasil_uji" widget="badge"/>
+                <field name="date_berlaku"/>
+                <field name="no_spk"/>
+                <field name="total" sum="Total"/>
+                <field name="status_perpanjangan" widget="badge"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ============================================
+         KEUR - MASTER DATA VIEWS
+    ============================================ -->
+    <record id="view_kict_keur_master_form" model="ir.ui.view">
+        <field name="name">kict.keur.master.form</field>
+        <field name="model">kict.keur</field>
+        <field name="arch" type="xml">
+            <form string="Master Data KEUR" create="false" edit="false" delete="false">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" icon="fa-history" type="object" name="action_view_spk">
+                            <field name="spk_count" widget="statinfo" string="SPK"/>
+                        </button>
+                    </div>
+
+                    <group string="Informasi Kendaraan">
+                        <group>
+                            <field name="fleet_id"/>
+                            <field name="license_plate"/>
+                            <field name="vin_sn"/>
+                        </group>
+                        <group>
+                            <field name="engine_number"/>
+                            <field name="vehicle_type"/>
+                            <field name="color"/>
+                        </group>
+                    </group>
+
+                    <group string="Informasi KEUR">
+                        <group>
+                            <field name="no_keur"/>
+                            <field name="jenis_uji"/>
+                            <field name="hasil_uji"/>
+                        </group>
+                        <group>
+                            <field name="date_ditetapkan"/>
+                            <field name="date_berlaku"/>
+                            <field name="umur_display"/>
+                            <field name="keterangan"/>
+                            <field name="status_color" invisible="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="History SPK">
+                            <field name="spk_ids" nolabel="1">
+                                <tree decoration-success="status == 'closed'" decoration-warning="status == 'butuh_approval'">
+                                    <field name="tanggal_spk"/>
+                                    <field name="no_spk"/>
+                                    <field name="date_ditetapkan"/>
+                                    <field name="date_berlaku"/>
+                                    <field name="total_biaya" sum="Total"/>
+                                    <field name="status" widget="badge"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_kict_keur_master_tree" model="ir.ui.view">
+        <field name="name">kict.keur.master.tree</field>
+        <field name="model">kict.keur</field>
+        <field name="arch" type="xml">
+            <tree string="Master Data KEUR" 
+                  decoration-danger="status_color == 1" 
+                  decoration-warning="status_color == 3"
+                  decoration-success="status_color == 10">
+                <field name="fleet_id"/>
+                <field name="license_plate"/>
+                <field name="no_keur"/>
+                <field name="jenis_uji"/>
+                <field name="hasil_uji" widget="badge"/>
+                <field name="date_berlaku"/>
+                <field name="umur_display"/>
+                <field name="spk_count" string="Jml SPK"/>
+                <field name="keterangan" widget="badge"
+                       decoration-danger="status_color == 1"
+                       decoration-warning="status_color == 3"
+                       decoration-success="status_color == 10"/>
+                <field name="status_color" column_invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ============================================
+         KEUR - SPK VIEWS
+    ============================================ -->
+    <record id="view_kict_keur_spk_form" model="ir.ui.view">
+        <field name="name">kict.keur.spk.form</field>
+        <field name="model">kict.keur.spk</field>
+        <field name="arch" type="xml">
+            <form string="SPK Perpanjangan KEUR">
+                <sheet>
+                    <group string="Referensi">
+                        <group>
+                            <field name="keur_id" options="{'no_create': True}"/>
+                            <field name="license_plate"/>
+                            <field name="no_keur"/>
+                        </group>
+                        <group>
+                            <field name="tanggal_spk"/>
+                            <field name="no_spk"/>
+                            <field name="status"/>
+                        </group>
+                    </group>
+
+                    <group string="Periode Perpanjangan">
+                        <group><field name="date_ditetapkan"/></group>
+                        <group><field name="date_berlaku"/></group>
+                    </group>
+
+                    <group string="Detail Biaya">
+                        <group>
+                            <field name="pkb"/>
+                            <field name="swdkllj"/>
+                            <field name="jasa"/>
+                        </group>
+                        <group>
+                            <field name="admin_plat"/>
+                            <field name="denda"/>
+                            <field name="materai"/>
+                            <field name="total_biaya" class="oe_subtotal_footer_separator"/>
+                        </group>
+                    </group>
+
+                    <group><field name="notes" placeholder="Catatan..."/></group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_kict_keur_spk_tree" model="ir.ui.view">
+        <field name="name">kict.keur.spk.tree</field>
+        <field name="model">kict.keur.spk</field>
+        <field name="arch" type="xml">
+            <tree string="SPK KEUR" decoration-success="status == 'closed'" decoration-warning="status == 'butuh_approval'">
+                <field name="tanggal_spk"/>
+                <field name="no_spk"/>
+                <field name="license_plate"/>
+                <field name="no_keur"/>
+                <field name="date_berlaku"/>
+                <field name="total_biaya" sum="Total"/>
+                <field name="status" widget="badge"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ============================================
+         KEUR - ACTIONS & MENU
+    ============================================ -->
+    <record id="action_kict_keur_master" model="ir.actions.act_window">
+        <field name="name">Master Data KEUR</field>
+        <field name="res_model">kict.keur</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_kict_keur_master_tree"/>
+        <field name="context">{'form_view_ref': 'kict_document_upload_gdrive.view_kict_keur_master_form'}</field>
+    </record>
+
+    <record id="action_kict_keur_verifikasi" model="ir.actions.act_window">
+        <field name="name">Verifikasi KEUR</field>
+        <field name="res_model">kict.keur</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_kict_keur_verifikasi_tree"/>
+        <field name="context">{'form_view_ref': 'kict_document_upload_gdrive.view_kict_keur_verifikasi_form'}</field>
+    </record>
+
+    <record id="action_kict_keur_spk" model="ir.actions.act_window">
+        <field name="name">SPK KEUR</field>
+        <field name="res_model">kict.keur.spk</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_kict_keur_root" name="KEUR" parent="menu_kict_document_root" sequence="30"/>
+    <menuitem id="menu_kict_keur_master" name="Master Data" parent="menu_kict_keur_root" action="action_kict_keur_master" sequence="1"/>
+    <menuitem id="menu_kict_keur_verifikasi" name="Verifikasi" parent="menu_kict_keur_root" action="action_kict_keur_verifikasi" sequence="2"/>
+    <menuitem id="menu_kict_keur_spk" name="SPK" parent="menu_kict_keur_root" action="action_kict_keur_spk" sequence="3"/>
+
+</odoo>
