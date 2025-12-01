@@ -27,9 +27,9 @@ class KictNotice(models.Model):
     cylinder = fields.Integer(string="Cylinder", required=True, store=True)
     date_berlaku = fields.Date(string="Tanggal Berlaku", required=True, store=True)
     
-    # Informasi SPK untuk Perpanjangan
+    # Informasi SPK untuk Perpanjangan (Diisi di Menu SPK)
     tanggal_spk = fields.Date(string="Tanggal SPK")
-    no_spk = fields.Char(string="No. SPK")
+    no_spk = fields.Char(string="No. SPK", readonly=True)
     status_perpanjangan = fields.Selection([
         ('closed', 'Closed'),
         ('butuh_approval', 'Butuh Approval'),
@@ -38,7 +38,7 @@ class KictNotice(models.Model):
     ], string='Status Perpanjangan', default='butuh_approval')
     notes = fields.Text(string='Catatan')
     
-    # Informasi Biaya
+    # Informasi Biaya (Diisi di Menu SPK)
     pkb = fields.Float(string="PKB", default=0.0)
     swdkllj = fields.Float(string="SWDKLLJ", default=0.0)
     jasa = fields.Float(string="JASA", default=0.0)
@@ -158,42 +158,59 @@ class KictNotice(models.Model):
             'target': 'current',
         }
     
-    @api.model_create_multi
-    def create(self, vals_list):
-        """Override create untuk otomatis membuat record di renewal ketika ada biaya"""
-        records = super(KictNotice, self).create(vals_list)
-        for record in records:
-            # Cek apakah ada data biaya yang diinput
-            if record.tanggal_spk and record.no_spk and record.total > 0:
-                # Buat record di kict.notice.renewal
-                self.env['kict.notice.renewal'].create({
-                    'notice_id': record.id,
-                    'tanggal_spk': record.tanggal_spk,
-                    'no_spk': record.no_spk,
-                    'date_ditetapkan': record.date_ditetapkan,
-                    'date_berlaku': record.date_berlaku,
-                    'pkb': record.pkb,
-                    'swdkllj': record.swdkllj,
-                    'jasa': record.jasa,
-                    'admin_plat': record.admin_plat,
-                    'denda': record.denda,
-                    'materai': record.materai,
-                    'keterangan': record.status_perpanjangan,
-                    'notes': record.notes,
-                })
-        return records
+    @api.model
+    def _generate_no_spk(self):
+        """
+        Generate No. SPK otomatis dengan format: SPK/YYYY/MM/XXXX
+        Contoh: SPK/2024/12/0001
+        """
+        today = date.today()
+        year = today.strftime('%Y')
+        month = today.strftime('%m')
+        
+        # Cari SPK terakhir di bulan ini
+        last_spk = self.search([
+            ('no_spk', 'like', f'SPK/{year}/{month}/%')
+        ], order='no_spk desc', limit=1)
+        
+        if last_spk and last_spk.no_spk:
+            # Extract nomor urut terakhir
+            try:
+                last_number = int(last_spk.no_spk.split('/')[-1])
+                new_number = last_number + 1
+            except:
+                new_number = 1
+        else:
+            new_number = 1
+        
+        # Format: SPK/YYYY/MM/XXXX (4 digit)
+        return f"SPK/{year}/{month}/{new_number:04d}"
+    
+    @api.onchange('tanggal_spk')
+    def _onchange_tanggal_spk(self):
+        """Auto-generate no_spk ketika tanggal_spk diisi"""
+        if self.tanggal_spk and not self.no_spk:
+            self.no_spk = self._generate_no_spk()
     
     def write(self, vals):
-        """Override write untuk update/create renewal ketika data biaya berubah"""
+        """Override write untuk auto-generate SPK dan create/update renewal"""
+        
+        # Auto-generate no_spk jika tanggal_spk diisi tapi no_spk kosong
+        if vals.get('tanggal_spk') and not vals.get('no_spk'):
+            for record in self:
+                if not record.no_spk:
+                    vals['no_spk'] = self._generate_no_spk()
+        
         result = super(KictNotice, self).write(vals)
         
-        # Cek apakah ada perubahan pada biaya atau SPK
+        # Cek apakah ada perubahan pada biaya atau SPK (khusus dari Menu SPK)
         biaya_fields = ['pkb', 'swdkllj', 'jasa', 'admin_plat', 'denda', 'materai', 
                        'tanggal_spk', 'no_spk', 'status_perpanjangan', 'notes',
                        'date_ditetapkan', 'date_berlaku']
         
         if any(field in vals for field in biaya_fields):
             for record in self:
+                # Hanya create/update renewal jika ada data SPK lengkap
                 if record.tanggal_spk and record.no_spk and record.total > 0:
                     # Cek apakah sudah ada renewal dengan SPK yang sama
                     existing_renewal = self.env['kict.notice.renewal'].search([

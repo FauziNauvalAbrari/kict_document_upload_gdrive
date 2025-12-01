@@ -1,3 +1,6 @@
+# ============================================
+# FILE: kict_stnk.py
+# ============================================
 from odoo import models, fields, api
 from datetime import date
 
@@ -26,29 +29,6 @@ class KictStnk(models.Model):
         for rec in self:
             rec.spk_count = len(rec.spk_ids)
 
-    @api.model_create_multi
-    def create(self, vals_list):
-        records = super().create(vals_list)
-        for rec in records:
-            if rec.tanggal_spk and rec.total > 0:
-                rec.no_spk = rec._generate_spk_number('STNK')
-                self.env['kict.stnk.spk'].create({
-                    'stnk_id': rec.id,
-                    'tanggal_spk': rec.tanggal_spk,
-                    'no_spk': rec.no_spk,
-                    'date_ditetapkan': rec.date_ditetapkan,
-                    'date_berlaku': rec.date_berlaku,
-                    'pkb': rec.pkb,
-                    'swdkllj': rec.swdkllj,
-                    'jasa': rec.jasa,
-                    'admin_plat': rec.admin_plat,
-                    'denda': rec.denda,
-                    'materai': rec.materai,
-                    'status': rec.status_perpanjangan,
-                    'notes': rec.notes,
-                })
-        return records
-
     def action_view_spk(self):
         self.ensure_one()
         return {
@@ -74,36 +54,63 @@ class KictStnkSpk(models.Model):
     license_plate = fields.Char(related='stnk_id.license_plate', store=True)
     no_stnk = fields.Char(related='stnk_id.no_stnk', store=True)
 
+    @api.model
+    def _generate_no_spk(self):
+        """Generate No. SPK dengan format: SPK/YYYY/MM/XXXX"""
+        today = date.today()
+        year = today.strftime('%Y')
+        month = today.strftime('%m')
+        
+        # Cari SPK terakhir di bulan ini
+        last_spk = self.search([
+            ('no_spk', 'like', f'SPK/{year}/{month}/%')
+        ], order='no_spk desc', limit=1)
+        
+        if last_spk and last_spk.no_spk:
+            try:
+                last_number = int(last_spk.no_spk.split('/')[-1])
+                new_number = last_number + 1
+            except:
+                new_number = 1
+        else:
+            new_number = 1
+        
+        return f"SPK/{year}/{month}/{new_number:04d}"
+    
+    @api.onchange('tanggal_spk')
+    def _onchange_tanggal_spk(self):
+        """Auto-generate no_spk ketika tanggal_spk diisi"""
+        if self.tanggal_spk and not self.no_spk:
+            self.no_spk = self._generate_no_spk()
+
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
-            if not vals.get('no_spk') and vals.get('tanggal_spk'):
-                # Generate SPK number
-                tanggal = fields.Date.from_string(vals['tanggal_spk'])
-                month_year = tanggal.strftime('%b%Y')
-                
-                existing = self.search([('no_spk', 'like', 'SPK-%/STNK/')], order='id desc', limit=1)
-                if existing and existing.no_spk:
-                    try:
-                        last_num = int(existing.no_spk.split('-')[1].split('/')[0])
-                        new_num = last_num + 1
-                    except:
-                        new_num = 1
-                else:
-                    new_num = 1
-                
-                vals['no_spk'] = f"SPK-{str(new_num).zfill(3)}/STNK/{month_year}"
+            # Auto-generate no_spk jika belum ada
+            if vals.get('tanggal_spk') and not vals.get('no_spk'):
+                vals['no_spk'] = self._generate_no_spk()
         
         records = super().create(vals_list)
         
-        # Update parent STNK dengan data terbaru
+        # Update parent STNK dengan data terbaru jika status closed
         for rec in records:
-            if rec.stnk_id:
+            if rec.stnk_id and rec.status == 'closed':
                 rec.stnk_id.write({
                     'date_ditetapkan': rec.date_ditetapkan,
                     'date_berlaku': rec.date_berlaku,
-                    'no_spk': rec.no_spk,
-                    'tanggal_spk': rec.tanggal_spk,
                 })
         
         return records
+    
+    def write(self, vals):
+        """Update STNK jika status jadi closed"""
+        result = super().write(vals)
+        
+        for rec in self:
+            if rec.status == 'closed' and rec.stnk_id:
+                rec.stnk_id.write({
+                    'date_ditetapkan': rec.date_ditetapkan,
+                    'date_berlaku': rec.date_berlaku,
+                })
+        
+        return result

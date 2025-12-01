@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <!-- ============================================
-         STNK - VERIFIKASI VIEWS
+         STNK - VERIFIKASI VIEWS (HANYA: Kendaraan + STNK + Biaya Awal)
     ============================================ -->
     <record id="view_kict_stnk_verifikasi_form" model="ir.ui.view">
         <field name="name">kict.stnk.verifikasi.form</field>
@@ -9,6 +9,7 @@
         <field name="arch" type="xml">
             <form string="Verifikasi STNK">
                 <sheet>
+                    <!-- Section: Informasi Kendaraan -->
                     <group string="Informasi Kendaraan">
                         <group>
                             <field name="fleet_id" options="{'no_create': True}"/>
@@ -22,6 +23,7 @@
                         </group>
                     </group>
 
+                    <!-- Section: Informasi STNK -->
                     <group string="Informasi STNK">
                         <group>
                             <field name="date_terima"/>
@@ -35,17 +37,8 @@
                         </group>
                     </group>
 
-                    <group string="Data SPK">
-                        <group>
-                            <field name="tanggal_spk"/>
-                            <field name="no_spk"/>
-                        </group>
-                        <group>
-                            <field name="status_perpanjangan"/>
-                        </group>
-                    </group>
-
-                    <group string="Detail Biaya">
+                    <!-- Section: Biaya Awal (Estimasi Pertama Kali) -->
+                    <group string="Biaya Awal (Estimasi)">
                         <group>
                             <field name="pkb"/>
                             <field name="swdkllj"/>
@@ -55,7 +48,7 @@
                             <field name="admin_plat"/>
                             <field name="denda"/>
                             <field name="materai"/>
-                            <field name="total" class="oe_subtotal_footer_separator"/>
+                            <field name="total" class="oe_subtotal_footer_separator" readonly="1"/>
                         </group>
                     </group>
 
@@ -77,9 +70,91 @@
                 <field name="no_stnk"/>
                 <field name="date_ditetapkan"/>
                 <field name="date_berlaku"/>
-                <field name="no_spk"/>
                 <field name="total" sum="Total"/>
-                <field name="status_perpanjangan" widget="badge"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ============================================
+         STNK - SPK VIEWS (Input SPK + Update Biaya)
+    ============================================ -->
+    <record id="view_kict_stnk_spk_form" model="ir.ui.view">
+        <field name="name">kict.stnk.spk.form</field>
+        <field name="model">kict.stnk.spk</field>
+        <field name="arch" type="xml">
+            <form string="SPK Perpanjangan STNK">
+                <sheet>
+                    <!-- Section: Informasi Kendaraan (Readonly) -->
+                    <group string="Informasi Kendaraan">
+                        <group>
+                            <field name="stnk_id" options="{'no_create': True}"/>
+                            <field name="fleet_id" readonly="1"/>
+                            <field name="license_plate" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="no_stnk" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <!-- Section: Data SPK Perpanjangan -->
+                    <group string="Data SPK Perpanjangan">
+                        <group>
+                            <field name="tanggal_spk" required="1"/>
+                            <field name="no_spk" readonly="1" force_save="1"/>
+                        </group>
+                        <group>
+                            <field name="status" required="1"/>
+                        </group>
+                    </group>
+
+                    <!-- Section: Update Periode STNK -->
+                    <group string="Update Periode STNK">
+                        <group>
+                            <field name="date_ditetapkan" required="1"/>
+                        </group>
+                        <group>
+                            <field name="date_berlaku" required="1"/>
+                        </group>
+                    </group>
+
+                    <!-- Section: Biaya Perpanjangan -->
+                    <group string="Biaya Perpanjangan">
+                        <group>
+                            <field name="pkb"/>
+                            <field name="swdkllj"/>
+                            <field name="jasa"/>
+                        </group>
+                        <group>
+                            <field name="admin_plat"/>
+                            <field name="denda"/>
+                            <field name="materai"/>
+                            <field name="total_biaya" class="oe_subtotal_footer_separator" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <field name="notes" placeholder="Catatan perpanjangan..."/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_kict_stnk_spk_tree" model="ir.ui.view">
+        <field name="name">kict.stnk.spk.tree</field>
+        <field name="model">kict.stnk.spk</field>
+        <field name="arch" type="xml">
+            <tree string="SPK STNK" 
+                  decoration-success="status == 'closed'" 
+                  decoration-warning="status == 'butuh_approval'">
+                <field name="tanggal_spk"/>
+                <field name="no_spk"/>
+                <field name="license_plate"/>
+                <field name="no_stnk"/>
+                <field name="date_ditetapkan"/>
+                <field name="date_berlaku"/>
+                <field name="total_biaya" sum="Total"/>
+                <field name="status" widget="badge"/>
             </tree>
         </field>
     </record>
@@ -128,16 +203,56 @@
                     </group>
 
                     <notebook>
-                        <page string="History SPK">
-                            <field name="spk_ids" nolabel="1">
-                                <tree decoration-success="status == 'closed'" decoration-warning="status == 'butuh_approval'">
+                        <page string="History SPK Perpanjangan">
+                            <field name="spk_ids" readonly="1" nolabel="1">
+                                <tree decoration-success="status == 'closed'" 
+                                      decoration-warning="status == 'butuh_approval'"
+                                      decoration-muted="status == 'rejected'"
+                                      decoration-info="status == 'pending'">
                                     <field name="tanggal_spk"/>
                                     <field name="no_spk"/>
-                                    <field name="date_ditetapkan"/>
-                                    <field name="date_berlaku"/>
+                                    <field name="date_ditetapkan" string="Periode Mulai"/>
+                                    <field name="date_berlaku" string="Periode Akhir"/>
+                                    <field name="pkb" optional="hide"/>
+                                    <field name="swdkllj" optional="hide"/>
+                                    <field name="jasa" optional="hide"/>
+                                    <field name="admin_plat" optional="hide"/>
+                                    <field name="denda" optional="hide"/>
+                                    <field name="materai" optional="hide"/>
                                     <field name="total_biaya" sum="Total"/>
                                     <field name="status" widget="badge"/>
                                 </tree>
+                                <form string="Detail SPK" create="false" edit="false" delete="false">
+                                    <sheet>
+                                        <group>
+                                            <group>
+                                                <field name="tanggal_spk" readonly="1"/>
+                                                <field name="no_spk" readonly="1"/>
+                                                <field name="date_ditetapkan" readonly="1"/>
+                                                <field name="date_berlaku" readonly="1"/>
+                                            </group>
+                                            <group>
+                                                <field name="status" readonly="1"/>
+                                                <field name="total_biaya" readonly="1"/>
+                                            </group>
+                                        </group>
+                                        <group string="Rincian Biaya">
+                                            <group>
+                                                <field name="pkb" readonly="1"/>
+                                                <field name="swdkllj" readonly="1"/>
+                                                <field name="jasa" readonly="1"/>
+                                            </group>
+                                            <group>
+                                                <field name="admin_plat" readonly="1"/>
+                                                <field name="denda" readonly="1"/>
+                                                <field name="materai" readonly="1"/>
+                                            </group>
+                                        </group>
+                                        <group>
+                                            <field name="notes" placeholder="Catatan..." readonly="1"/>
+                                        </group>
+                                    </sheet>
+                                </form>
                             </field>
                         </page>
                     </notebook>
@@ -172,76 +287,6 @@
     </record>
 
     <!-- ============================================
-         STNK - SPK VIEWS
-    ============================================ -->
-    <record id="view_kict_stnk_spk_form" model="ir.ui.view">
-        <field name="name">kict.stnk.spk.form</field>
-        <field name="model">kict.stnk.spk</field>
-        <field name="arch" type="xml">
-            <form string="SPK Perpanjangan STNK">
-                <sheet>
-                    <group string="Referensi">
-                        <group>
-                            <field name="stnk_id" options="{'no_create': True}"/>
-                            <field name="license_plate"/>
-                            <field name="no_stnk"/>
-                        </group>
-                        <group>
-                            <field name="tanggal_spk"/>
-                            <field name="no_spk"/>
-                            <field name="status"/>
-                        </group>
-                    </group>
-
-                    <group string="Periode Perpanjangan">
-                        <group>
-                            <field name="date_ditetapkan"/>
-                        </group>
-                        <group>
-                            <field name="date_berlaku"/>
-                        </group>
-                    </group>
-
-                    <group string="Detail Biaya">
-                        <group>
-                            <field name="pkb"/>
-                            <field name="swdkllj"/>
-                            <field name="jasa"/>
-                        </group>
-                        <group>
-                            <field name="admin_plat"/>
-                            <field name="denda"/>
-                            <field name="materai"/>
-                            <field name="total_biaya" class="oe_subtotal_footer_separator"/>
-                        </group>
-                    </group>
-
-                    <group>
-                        <field name="notes" placeholder="Catatan perpanjangan..."/>
-                    </group>
-                </sheet>
-            </form>
-        </field>
-    </record>
-
-    <record id="view_kict_stnk_spk_tree" model="ir.ui.view">
-        <field name="name">kict.stnk.spk.tree</field>
-        <field name="model">kict.stnk.spk</field>
-        <field name="arch" type="xml">
-            <tree string="SPK STNK" decoration-success="status == 'closed'" decoration-warning="status == 'butuh_approval'">
-                <field name="tanggal_spk"/>
-                <field name="no_spk"/>
-                <field name="license_plate"/>
-                <field name="no_stnk"/>
-                <field name="date_ditetapkan"/>
-                <field name="date_berlaku"/>
-                <field name="total_biaya" sum="Total"/>
-                <field name="status" widget="badge"/>
-            </tree>
-        </field>
-    </record>
-
-    <!-- ============================================
          STNK - SEARCH VIEW
     ============================================ -->
     <record id="view_kict_stnk_search" model="ir.ui.view">
@@ -254,6 +299,7 @@
                 <field name="no_stnk"/>
                 <filter string="Denda" name="filter_denda" domain="[('umur_days', '&lt;', 0)]"/>
                 <filter string="Segera Perpanjang" name="filter_urgent" domain="[('umur_days', '&gt;=', 0), ('umur_days', '&lt;=', 30)]"/>
+                <filter string="Perhatian" name="filter_warning" domain="[('umur_days', '&gt;', 30), ('umur_days', '&lt;=', 60)]"/>
                 <filter string="Normal" name="filter_normal" domain="[('umur_days', '&gt;', 60)]"/>
                 <group expand="0" string="Group By">
                     <filter string="Fleet" name="group_fleet" context="{'group_by': 'fleet_id'}"/>
@@ -266,6 +312,36 @@
     <!-- ============================================
          STNK - ACTIONS
     ============================================ -->
+    <record id="action_kict_stnk_verifikasi" model="ir.actions.act_window">
+        <field name="name">Verifikasi STNK</field>
+        <field name="res_model">kict.stnk</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_kict_stnk_verifikasi_tree"/>
+        <field name="context">{'form_view_ref': 'kict_document_upload_gdrive.view_kict_stnk_verifikasi_form'}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Buat Verifikasi STNK Baru
+            </p>
+            <p>
+                Input data kendaraan, informasi STNK, dan biaya awal.
+            </p>
+        </field>
+    </record>
+
+    <record id="action_kict_stnk_spk" model="ir.actions.act_window">
+        <field name="name">SPK STNK</field>
+        <field name="res_model">kict.stnk.spk</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Tidak ada SPK perpanjangan
+            </p>
+            <p>
+                Buat SPK perpanjangan untuk STNK yang akan habis masa berlakunya.
+            </p>
+        </field>
+    </record>
+
     <record id="action_kict_stnk_master" model="ir.actions.act_window">
         <field name="name">Master Data STNK</field>
         <field name="res_model">kict.stnk</field>
@@ -274,26 +350,27 @@
         <field name="context">{'form_view_ref': 'kict_document_upload_gdrive.view_kict_stnk_master_form'}</field>
     </record>
 
-    <record id="action_kict_stnk_verifikasi" model="ir.actions.act_window">
-        <field name="name">Verifikasi STNK</field>
-        <field name="res_model">kict.stnk</field>
-        <field name="view_mode">tree,form</field>
-        <field name="view_id" ref="view_kict_stnk_verifikasi_tree"/>
-        <field name="context">{'form_view_ref': 'kict_document_upload_gdrive.view_kict_stnk_verifikasi_form'}</field>
-    </record>
-
-    <record id="action_kict_stnk_spk" model="ir.actions.act_window">
-        <field name="name">SPK STNK</field>
-        <field name="res_model">kict.stnk.spk</field>
-        <field name="view_mode">tree,form</field>
-    </record>
-
     <!-- ============================================
          STNK - MENU
     ============================================ -->
     <menuitem id="menu_kict_stnk_root" name="STNK" parent="menu_kict_document_root" sequence="10"/>
-    <menuitem id="menu_kict_stnk_master" name="Master Data" parent="menu_kict_stnk_root" action="action_kict_stnk_master" sequence="1"/>
-    <menuitem id="menu_kict_stnk_verifikasi" name="Verifikasi" parent="menu_kict_stnk_root" action="action_kict_stnk_verifikasi" sequence="2"/>
-    <menuitem id="menu_kict_stnk_spk" name="SPK" parent="menu_kict_stnk_root" action="action_kict_stnk_spk" sequence="3"/>
+    
+    <menuitem id="menu_kict_stnk_verifikasi" 
+              name="Verifikasi STNK" 
+              parent="menu_kict_stnk_root" 
+              action="action_kict_stnk_verifikasi" 
+              sequence="1"/>
+    
+    <menuitem id="menu_kict_stnk_spk" 
+              name="SPK" 
+              parent="menu_kict_stnk_root" 
+              action="action_kict_stnk_spk" 
+              sequence="2"/>
+    
+    <menuitem id="menu_kict_stnk_master" 
+              name="Master Data STNK" 
+              parent="menu_kict_stnk_root" 
+              action="action_kict_stnk_master" 
+              sequence="3"/>
 
 </odoo>
