@@ -37,7 +37,7 @@ class KictDocumentCategory(models.Model):
         
         parent_menu = IrUiMenu.search([
             ('name', '=', 'Dokumen'),
-            ('parent_id.name', '=', 'Dokumen KICT')
+            ('parent_id.name', '=', 'Dokumen')
         ], limit=1)
         
         if not parent_menu:
@@ -78,7 +78,7 @@ class KictDocumentCategory(models.Model):
         
         parent_menu = IrUiMenu.search([
             ('name', '=', 'Dokumen'),
-            ('parent_id.name', '=', 'Dokumen KICT')
+            ('parent_id.name', '=', 'Dokumen')
         ], limit=1)
         
         if not parent_menu:
@@ -102,39 +102,15 @@ class KictDocumentCategory(models.Model):
         return False
 
     def delete_menu_item(self):
-        """Hapus menu item ketika kategori dihapus"""
         self.ensure_one()
         IrUiMenu = self.env['ir.ui.menu'].sudo()
-        IrActWindow = self.env['ir.actions.act_window'].sudo()
-        
-        parent_menu = IrUiMenu.search([
-            ('name', '=', 'Dokumen'),
-            ('parent_id.name', '=', 'Dokumen KICT')
-        ], limit=1)
-        
-        if not parent_menu:
-            return False
-        
-        menu = IrUiMenu.search([
-            ('name', '=', self.name),
-            ('parent_id', '=', parent_menu.id),
-        ])
-        
-        if menu:
-            action_str = menu.action
-            menu.unlink()
-            
-            if action_str and ',' in action_str:
-                try:
-                    action_model, action_id_str = action_str.split(',')
-                    action = IrActWindow.browse(int(action_id_str))
-                    if action.exists():
-                        action.unlink()
-                except Exception:
-                    pass
-            return True
-        
-        return False
+
+        menus = IrUiMenu.search([("name", "=", self.name)])
+
+        if menus:
+            menus.unlink()
+
+        return True
 
     def action_regenerate_all_menus(self):
         """Regenerate menu untuk semua kategori yang ada"""
@@ -162,6 +138,6 @@ class KictDocumentCategory(models.Model):
         
         for record in self:
             if not record.drive_folder_id:
-                main_folder_id = drive_service.create_folder("Dokumen KICT")
+                main_folder_id = drive_service.create_folder("Dokumen")
                 category_folder_id = drive_service.create_folder(record.name, parent_id=main_folder_id)
                 record.drive_folder_id = category_folder_id

@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <!-- ============================================
+         SIO - VERIFIKASI VIEWS
+    ============================================ -->
+    <record id="view_kict_sio_verifikasi_form" model="ir.ui.view">
+        <field name="name">kict.sio.verifikasi.form</field>
+        <field name="model">kict.sio</field>
+        <field name="arch" type="xml">
+            <form string="Verifikasi SIO">
+                <sheet>
+                    <group string="Informasi Kendaraan">
+                        <group>
+                            <field name="fleet_id" options="{'no_create': True}"/>
+                            <field name="license_plate"/>
+                            <field name="vin_sn"/>
+                        </group>
+                        <group>
+                            <field name="engine_number"/>
+                            <field name="vehicle_type"/>
+                            <field name="color"/>
+                        </group>
+                    </group>
+
+                    <group string="Informasi SIO">
+                        <group>
+                            <field name="no_sio"/>
+                            <field name="date_terima"/>
+                        </group>
+                        <group>
+                            <field name="date_ditetapkan"/>
+                            <field name="date_berlaku"/>
+                            <field name="jumlah_admin_sio"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <field name="notes" placeholder="Catatan..."/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_kict_sio_verifikasi_tree" model="ir.ui.view">
+        <field name="name">kict.sio.verifikasi.tree</field>
+        <field name="model">kict.sio</field>
+        <field name="arch" type="xml">
+            <tree string="Verifikasi SIO">
+                <field name="fleet_id"/>
+                <field name="license_plate"/>
+                <field name="no_sio"/>
+                <field name="date_terima"/>
+                <field name="date_ditetapkan"/>
+                <field name="date_berlaku"/>
+                <field name="jumlah_admin_sio"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ============================================
+         SIO - MASTER DATA VIEWS
+    ============================================ -->
+    <record id="view_kict_sio_master_form" model="ir.ui.view">
+        <field name="name">kict.sio.master.form</field>
+        <field name="model">kict.sio</field>
+        <field name="arch" type="xml">
+            <form string="Master Data SIO" create="false" edit="false" delete="false">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" icon="fa-history" type="object" name="action_view_spk">
+                            <field name="spk_count" widget="statinfo" string="SPK"/>
+                        </button>
+                    </div>
+
+                    <group string="Informasi Kendaraan">
+                        <group>
+                            <field name="fleet_id"/>
+                            <field name="license_plate"/>
+                            <field name="vin_sn"/>
+                        </group>
+                        <group>
+                            <field name="engine_number"/>
+                            <field name="vehicle_type"/>
+                            <field name="color"/>
+                        </group>
+                    </group>
+
+                    <group string="Informasi SIO">
+                        <group>
+                            <field name="no_sio"/>
+                            <field name="date_terima"/>
+                            <field name="jumlah_admin_sio"/>
+                        </group>
+                        <group>
+                            <field name="date_ditetapkan"/>
+                            <field name="date_berlaku"/>
+                            <field name="umur_display"/>
+                            <field name="keterangan"/>
+                            <field name="status_color" invisible="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="History SPK">
+                            <field name="spk_ids" nolabel="1">
+                                <tree decoration-success="status == 'closed'" decoration-warning="status == 'butuh_approval'">
+                                    <field name="tanggal_spk"/>
+                                    <field name="no_spk"/>
+                                    <field name="tgl_ditetapkan_baru"/>
+                                    <field name="tgl_berlaku_baru"/>
+                                    <field name="total_biaya" sum="Total"/>
+                                    <field name="status" widget="badge"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_kict_sio_master_tree" model="ir.ui.view">
+        <field name="name">kict.sio.master.tree</field>
+        <field name="model">kict.sio</field>
+        <field name="arch" type="xml">
+            <tree string="Master Data SIO" 
+                  decoration-danger="status_color == 1" 
+                  decoration-warning="status_color == 3"
+                  decoration-success="status_color == 10">
+                <field name="fleet_id"/>
+                <field name="license_plate"/>
+                <field name="no_sio"/>
+                <field name="date_berlaku"/>
+                <field name="umur_display"/>
+                <field name="spk_count" string="Jml SPK"/>
+                <field name="keterangan" widget="badge"
+                       decoration-danger="status_color == 1"
+                       decoration-warning="status_color == 3"
+                       decoration-success="status_color == 10"/>
+                <field name="status_color" column_invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ============================================
+         SIO - SPK VIEWS (FIXED)
+    ============================================ -->
+    <record id="view_kict_sio_spk_form" model="ir.ui.view">
+        <field name="name">kict.sio.spk.form</field>
+        <field name="model">kict.sio.spk</field>
+        <field name="arch" type="xml">
+            <form string="SPK Perpanjangan SIO">
+                <sheet>
+                    <group string="Informasi Kendaraan">
+                        <group>
+                            <field name="sio_id" options="{'no_create': True}"/>
+                            <field name="fleet_id"/>
+                            <field name="license_plate"/>
+                        </group>
+                        <group>
+                            <field name="no_sio"/>
+                            <field name="tanggal_spk"/>
+                            <field name="no_spk" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group string="Update Periode SIO">
+                        <group>
+                            <field name="tgl_ditetapkan_lama" readonly="1"/>
+                            <field name="tgl_ditetapkan_baru"/>
+                        </group>
+                        <group>
+                            <field name="tgl_berlaku_baru"/>
+                            <field name="status"/>
+                        </group>
+                    </group>
+
+                    <group string="Detail Biaya">
+                        <group>
+                            <field name="nilai_sio"/>
+                        </group>
+                        <group>
+                            <field name="nilai_pengajuan"/>
+                            <field name="total_biaya" class="oe_subtotal_footer_separator" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <field name="notes" placeholder="Catatan perpanjangan..."/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_kict_sio_spk_tree" model="ir.ui.view">
+        <field name="name">kict.sio.spk.tree</field>
+        <field name="model">kict.sio.spk</field>
+        <field name="arch" type="xml">
+            <tree string="SPK SIO" decoration-success="status == 'closed'" decoration-warning="status == 'butuh_approval'">
+                <field name="tanggal_spk"/>
+                <field name="no_spk"/>
+                <field name="license_plate"/>
+                <field name="no_sio"/>
+                <field name="tgl_ditetapkan_baru"/>
+                <field name="tgl_berlaku_baru"/>
+                <field name="nilai_sio"/>
+                <field name="nilai_pengajuan"/>
+                <field name="total_biaya" sum="Total"/>
+                <field name="status" widget="badge"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- ============================================
+         SIO - ACTIONS & MENU
+    ============================================ -->
+    <record id="action_kict_sio_master" model="ir.actions.act_window">
+        <field name="name">Master Data SIO</field>
+        <field name="res_model">kict.sio</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_kict_sio_master_tree"/>
+        <field name="context">{'form_view_ref': 'kict_document_upload_gdrive.view_kict_sio_master_form'}</field>
+    </record>
+
+    <record id="action_kict_sio_verifikasi" model="ir.actions.act_window">
+        <field name="name">Verifikasi SIO</field>
+        <field name="res_model">kict.sio</field>
+        <field name="view_mode">tree,form</field>
+        <field name="view_id" ref="view_kict_sio_verifikasi_tree"/>
+        <field name="context">{'form_view_ref': 'kict_document_upload_gdrive.view_kict_sio_verifikasi_form'}</field>
+    </record>
+
+    <record id="action_kict_sio_spk" model="ir.actions.act_window">
+        <field name="name">SPK SIO</field>
+        <field name="res_model">kict.sio.spk</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_kict_sio_root" name="SIO" parent="menu_kict_document_root" sequence="20"/>
+    <menuitem id="menu_kict_sio_master" name="Master Data" parent="menu_kict_sio_root" action="action_kict_sio_master" sequence="1"/>
+    <menuitem id="menu_kict_sio_verifikasi" name="Verifikasi" parent="menu_kict_sio_root" action="action_kict_sio_verifikasi" sequence="2"/>
+    <menuitem id="menu_kict_sio_spk" name="SPK" parent="menu_kict_sio_root" action="action_kict_sio_spk" sequence="3"/>
+
+</odoo>
